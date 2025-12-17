@@ -204,9 +204,11 @@ a:hover{ text-decoration: underline; }
 
 /* Table */
 .table-wrap{
-  width: 100%;
   overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
   border-radius: 12px;
+  max-width: 100%;
   border: 1px solid var(--border2);
 }
 
