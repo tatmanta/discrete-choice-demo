@@ -87,7 +87,7 @@
 
       // Share content (kept generic; avoids encouraging sharing sensitive details)
       const shareUrl = new URL("./index.html", window.location.href).href; // always points to home
-      const shareText = `I took the Discrete Choice Survey and so should you: ${personaName}.`;
+      const shareText = `I took the Discrete Choice Survey and so should you.`;
 
       const shareTextEnc = encodeURIComponent(shareText);
       const shareUrlEnc = encodeURIComponent(shareUrl);
