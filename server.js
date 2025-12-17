@@ -46,18 +46,23 @@ app.use(express.static(path.join(__dirname)));
 // Gate route to set cookie (called from gate.html)
 app.get("/unlock", (req, res) => {
   const code = String(req.query.code || "").trim();
-  const ACCESS_CODE = process.env.ACCESS_CODE || "HAL2025";
+
+  // IMPORTANT: match your Railway variable name
+  // If you're setting ACCESS_CODE in Railway, read ACCESS_CODE here.
+  const ACCESS_CODE = process.env.ACCESS_CODE || process.env.ACCESS_CODE || "HAL2025";
 
   if (code !== ACCESS_CODE) {
     return res.status(401).send("NO");
   }
 
-  // Session cookie (expires when browser closes)
   res.setHeader(
-  "Set-Cookie",
-  `dc_access_ok=1; Path=/; SameSite=Lax; HttpOnly${process.env.NODE_ENV === "production" ? "; Secure" : ""}`
-);
+    "Set-Cookie",
+    `dc_access_ok=1; Path=/; SameSite=Lax; HttpOnly${process.env.NODE_ENV === "production" ? "; Secure" : ""}`
+  );
+
+  return res.status(200).send("OK");
 });
+
 
 // Friendly routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
