@@ -1,0 +1,433 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <title>What Matters Most to Me at the End of Life? | Values Profile</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="A short research survey exploring what people value most when thinking about end-of-life decisions. Discover your end-of-life values profile.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+  <div class="proto-banner" role="status" aria-live="polite">
+    Prototype preview — visual & UX changes only (no data saved)
+  </div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="./index.html" aria-label="Home">DISCRETE CHOICE SURVEY</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <header class="page-head">
+      <h1 class="survey-title">What Matters Most to Me at the End of Life?</h1>
+      <p class="survey-subtitle">A short research survey to identify your end-of-life values profile.</p>
+    </header>
+
+    <section id="mainBlock" aria-live="polite"></section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div>© 2025 · Research tool · Not medical or legal advice</div>
+    </div>
+  </footer>
+
+  <script>
+    const blocks = [
+      [ [ [0,1,1,1,1], [1,2,0,0,0] ], [ [2,2,1,1,0], [1,0,0,0,1] ], [ [2,0,1,0,1], [0,1,0,1,0] ], [ [1,0,1,1,0], [0,2,0,0,1] ], [ [2,1,1,0,1], [0,2,0,1,0] ], [ [1,1,0,1,0], [2,2,1,0,1] ], [ [2,1,0,0,0], [0,0,1,1,1] ], [ [1,2,1,0,0], [0,1,0,1,1] ] ],
+      [ [ [2,0,0,1,1], [0,2,1,0,0] ], [ [0,2,1,1,1], [2,0,1,1,1] ], [ [2,0,1,0,0], [1,1,0,1,1] ], [ [2,1,0,1,0], [1,0,1,0,1] ], [ [2,1,1,0,1], [1,2,0,1,0] ], [ [0,0,1,0,1], [1,2,0,1,0] ], [ [1,1,1,1,0], [0,2,0,0,1] ], [ [1,2,1,1,1], [2,1,0,0,0] ] ],
+      [ [ [2,2,1,1,0], [1,0,0,0,1] ], [ [2,0,0,0,0], [1,1,1,1,1] ], [ [1,2,0,1,0], [0,0,1,0,1] ], [ [0,2,0,0,1], [1,0,1,1,0] ], [ [0,0,1,1,0], [2,2,0,0,1] ], [ [2,0,1,1,0], [1,2,0,0,1] ], [ [1,2,1,0,1], [0,1,0,1,0] ], [ [0,1,1,0,1], [1,0,0,1,0] ] ],
+      [ [ [0,0,0,1,0], [2,1,1,0,1] ], [ [2,0,0,1,0], [1,1,1,0,1] ], [ [0,2,1,0,0], [2,0,0,1,1] ], [ [1,0,0,0,0], [0,1,1,1,1] ], [ [2,0,0,1,1], [1,1,1,0,0] ], [ [0,2,1,1,0], [2,1,0,0,1] ], [ [0,0,1,0,1], [2,2,0,1,0] ], [ [2,1,1,0,0], [0,2,0,1,1] ] ]
+    ];
+
+    const attributes = [
+      { name: "Caregiver and Medical Trust",
+        levels: [
+          "You have very little trust in your caregiver and medical team.",
+          "You have some trust in your caregiver and medical team.",
+          "You have a great deal of trust in your caregiver and medical team."
+        ]
+      },
+      { name: "Emotional Preparedness",
+        levels: [
+          "You do not feel ready or at peace with dying, and are experiencing significant anxiety.",
+          "You feel somewhat ready and at peace with dying, and are experiencing some anxiety.",
+          "You feel ready and at peace with dying, completely free from anxiety."
+        ]
+      },
+      { name: "Comfort and Pain",
+        levels: [
+          "You feel very uncomfortable and are experiencing pain.",
+          "You feel very comfortable and completely free from pain."
+        ]
+      },
+      { name: "Closure and Family",
+        levels: [
+          "Your friends and family are present, but you do not feel that your relationships and life are complete.",
+          "Your friends and family are present, and you feel that your relationships and life are complete."
+        ]
+      },
+      { name: "Financial and Medical",
+        levels: [
+          "You do not have your financial and medical affairs in order.",
+          "You have your financial and medical affairs in order."
+        ]
+      }
+    ];
+
+    const personaInfo = [
+      { name: "The Trusted Soul",
+        value: "Caregiver and Medical Trust",
+        desc: "You are someone who finds peace through confidence in others—especially those guiding you at the end of life. Having deep trust in your caregiver and medical team is essential to your sense of well-being. For you, knowing that the people around you are competent, compassionate, and aligned with your wishes is what allows you to relax. You are comforted not just by care, but by the connection and credibility of those providing it. Above all, feeling supported by trustworthy hands is your greatest source of calm."
+      },
+      { name: "The Peace Seeker",
+        value: "Emotional Preparedness",
+        desc: "Your most valued asset at the end of life is inner calm. You want to feel emotionally prepared, accepting, and free from overwhelming fear or anxiety. You believe that facing death with peace and clarity is the truest form of strength. More than circumstances or surroundings, it is your inner state that determines the quality of your final moments. You strive for acceptance, dignity, and a deep sense of emotional completion."
+      },
+      { name: "The Comfort Guardian",
+        value: "Comfort and Pain",
+        desc: "You prioritize physical comfort above all else. To you, the ability to feel free from pain and distress is the foundation of a good end-of-life experience. No matter the situation, being physically at ease allows you to focus on what truly matters. You believe that suffering should never define a person’s final days. Comfort isn’t just a luxury—it’s a right you deeply value."
+      },
+      { name: "The Legacy Weaver",
+        value: "Closure and Family",
+        desc: "You value presence, connection, and the feeling that your life and relationships are complete. More than anything, you want to leave with the people you love by your side and no unfinished emotional business. You believe that a meaningful farewell, shared memories, and heartfelt goodbyes are essential. Your sense of peace comes from knowing your loved ones are emotionally cared for and that your legacy is understood. For you, closure is not about endings—it’s about wholeness."
+      },
+      { name: "The Order Keeper",
+        value: "Financial and Medical Affairs",
+        desc: "You are someone who finds comfort in preparedness and responsibility. Having your financial and medical affairs in order is crucial to your peace of mind. You want to ease the burden on your loved ones and ensure that your wishes are honored clearly and without confusion. To you, organization is a final act of love and respect. You value control, clarity, and the reassurance that everything has been handled with care."
+      }
+    ];
+
+    let currentTask = 0;
+    let blockIndex = null;
+    let assignedBlock = null;
+    let answers = null;
+    let submissionInProgress = false;
+
+    // one handler reused across tasks, removed/re-added each render
+    let taskKeyHandler = null;
+
+    function clearTaskKeyHandler(){
+      if (taskKeyHandler) {
+        document.removeEventListener('keydown', taskKeyHandler);
+        taskKeyHandler = null;
+      }
+    }
+
+    function renderIntro(){
+      clearTaskKeyHandler();
+
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card">
+          <div class="prose">
+            <p>
+              You will be asked to consider various scenarios related to end-of-life decisions. Each scenario is designed to
+              highlight the diverse considerations and choices that may arise as one approaches the end of life.
+            </p>
+            <p>
+              We recognize that the subject matter may be sensitive and challenging to contemplate, and we encourage you to
+              engage with each scenario to the best of your ability.
+            </p>
+            <p>
+              Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
+              and preferences as there are no right or wrong answers.
+            </p>
+          </div>
+
+          <div class="cta-row">
+            <button type="button" class="btn btn-primary" id="startBtn">Start survey</button>
+          </div>
+
+          <p class="fineprint">
+            This tool is for research/education. Not medical or legal advice.
+          </p>
+        </div>
+      `;
+
+      document.getElementById('startBtn').onclick = function() {
+        blockIndex = Math.floor(Math.random() * blocks.length);
+        assignedBlock = blocks[blockIndex];
+        answers = Array(assignedBlock.length).fill(null);
+        showTask(0);
+      };
+    }
+
+    function showTask(idx) {
+      clearTaskKeyHandler();
+
+      currentTask = idx;
+      const task = assignedBlock[idx];
+      const [profileA, profileB] = task;
+
+      const progressPct = Math.round(((idx + 1) / assignedBlock.length) * 100);
+
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card">
+          <div class="task-head">
+            <div class="task-meta">
+              <span class="task-count">Question ${idx + 1} of ${assignedBlock.length}</span>
+              <span class="task-prompt">Choose Scenario 1 or 2</span>
+            </div>
+            <div class="progress" aria-label="Progress">
+              <div class="progress-bar" style="width:${progressPct}%"></div>
+            </div>
+          </div>
+
+          <div class="table-wrap" role="region" aria-label="Scenarios table">
+            <table class="scenarioTbl" id="scenarioTbl" role="radiogroup" aria-label="Scenario choice">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 28%"></th>
+                  <th scope="col" class="centered scHead sc1head" data-scn="1" style="width: 36%">Scenario 1</th>
+                  <th scope="col" class="centered scHead sc2head" data-scn="2" style="width: 36%">Scenario 2</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${attributes.map((attr, i) => `
+                  <tr>
+                    <th scope="row" class="rowhead">${attr.name}</th>
+                    <td class="scCell sc1col" data-scn="1" tabindex="-1" role="button" aria-label="Select Scenario 1">
+                      ${attr.levels[profileA[i]]}
+                    </td>
+                    <td class="scCell sc2col" data-scn="2" tabindex="-1" role="button" aria-label="Select Scenario 2">
+                      ${attr.levels[profileB[i]]}
+                    </td>
+                  </tr>
+                `).join('')}
+
+                <tr class="radarow">
+                  <th scope="row" class="rowhead">Your choice</th>
+
+                  <td class="centered scChoice sc1choice" data-scn="1" role="radio" aria-checked="false" tabindex="-1" aria-label="Scenario 1">
+                    <label class="radioPill">
+                      <input type="radio" name="rb" value="Option 1" ${answers[idx]==="Option 1"?"checked":""} id="radioSc1" tabindex="-1" aria-hidden="true">
+                      <span>Select</span>
+                    </label>
+                  </td>
+
+                  <td class="centered scChoice sc2choice" data-scn="2" role="radio" aria-checked="false" tabindex="-1" aria-label="Scenario 2">
+                    <label class="radioPill">
+                      <input type="radio" name="rb" value="Option 2" ${answers[idx]==="Option 2"?"checked":""} id="radioSc2" tabindex="-1" aria-hidden="true">
+                      <span>Select</span>
+                    </label>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="btn-row">
+            ${idx>0
+              ? `<button type="button" class="btn btn-ghost" id="prevBtn">Previous</button>`
+              : `<button type="button" class="btn btn-ghost" id="backBtn">Back</button>`
+            }
+
+            ${idx<assignedBlock.length-1
+              ? `<button type="button" class="btn btn-primary" id="nextBtn">Next</button>`
+              : `<button type="button" class="btn btn-primary" id="submitBtn">Submit</button>`
+            }
+          </div>
+
+          <p class="fineprint">Prototype only — no responses are saved.</p>
+        </div>
+      `;
+
+      const table = document.getElementById('scenarioTbl');
+      const sc1ChoiceCell = document.querySelector('.sc1choice');
+      const sc2ChoiceCell = document.querySelector('.sc2choice');
+
+      function updateColHighlight(scenarioNum) {
+        table.querySelectorAll('.selectedScenarioCol').forEach(el => el.classList.remove('selectedScenarioCol'));
+        table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('selectedScenarioCol'));
+      }
+
+      function setHover(scenarioNum, on){
+        table.querySelectorAll('.hoverScenarioCol').forEach(el => el.classList.remove('hoverScenarioCol'));
+        if (!on) return;
+        table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('hoverScenarioCol'));
+      }
+
+      function selectedScenarioFromAnswers(){
+        if (answers[idx] === "Option 1") return 1;
+        if (answers[idx] === "Option 2") return 2;
+        const rb1 = document.getElementById('radioSc1');
+        const rb2 = document.getElementById('radioSc2');
+        if (rb1 && rb1.checked) return 1;
+        if (rb2 && rb2.checked) return 2;
+        return null;
+      }
+
+      function setRovingFocus(activeScenarioNum){
+        const is1 = activeScenarioNum === 1;
+        sc1ChoiceCell.tabIndex = is1 ? 0 : -1;
+        sc2ChoiceCell.tabIndex = is1 ? -1 : 0;
+      }
+
+      function updateAriaChecked(selectedScenarioNum){
+        sc1ChoiceCell.setAttribute('aria-checked', selectedScenarioNum === 1 ? 'true' : 'false');
+        sc2ChoiceCell.setAttribute('aria-checked', selectedScenarioNum === 2 ? 'true' : 'false');
+      }
+
+      function selectScenario(scenarioNum){
+        if (scenarioNum === 1) {
+          document.getElementById('radioSc1').checked = true;
+          updateColHighlight(1);
+          updateAriaChecked(1);
+          setRovingFocus(1);
+        } else {
+          document.getElementById('radioSc2').checked = true;
+          updateColHighlight(2);
+          updateAriaChecked(2);
+          setRovingFocus(2);
+        }
+
+        // after selection, send focus to Next/Submit (fast keyboard flow)
+        const nextBtn = document.getElementById('nextBtn') || document.getElementById('submitBtn');
+        if (nextBtn) nextBtn.focus();
+      }
+
+      function focusScenarioRadio(scenarioNum){
+        setRovingFocus(scenarioNum);
+        (scenarioNum === 1 ? sc1ChoiceCell : sc2ChoiceCell).focus();
+      }
+
+      // Initialize selection + focus model
+      const initialSelected = selectedScenarioFromAnswers();
+      if (initialSelected === 1) { updateColHighlight(1); updateAriaChecked(1); setRovingFocus(1); }
+      else if (initialSelected === 2) { updateColHighlight(2); updateAriaChecked(2); setRovingFocus(2); }
+      else { updateAriaChecked(0); setRovingFocus(1); }
+
+      // Column click/hover
+      table.querySelectorAll('[data-scn="1"]').forEach(el => {
+        el.addEventListener('click', () => selectScenario(1));
+        el.addEventListener('mouseenter', () => setHover(1, true));
+        el.addEventListener('mouseleave', () => setHover(1, false));
+      });
+      table.querySelectorAll('[data-scn="2"]').forEach(el => {
+        el.addEventListener('click', () => selectScenario(2));
+        el.addEventListener('mouseenter', () => setHover(2, true));
+        el.addEventListener('mouseleave', () => setHover(2, false));
+      });
+
+      function getActiveScenarioFromFocus(){
+        if (document.activeElement && document.activeElement.dataset && document.activeElement.dataset.scn) {
+          const n = Number(document.activeElement.dataset.scn);
+          if (n === 1 || n === 2) return n;
+        }
+        if (sc1ChoiceCell.tabIndex === 0) return 1;
+        if (sc2ChoiceCell.tabIndex === 0) return 2;
+        return 1;
+      }
+
+      // Document-level key handler (reliable on Q1)
+      taskKeyHandler = (e) => {
+        const wrapNow = document.querySelector('.table-wrap');
+        if (!wrapNow) return;
+
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+        if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+
+        const active = getActiveScenarioFromFocus();
+
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); focusScenarioRadio(1); return; }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); focusScenarioRadio(2); return; }
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); selectScenario(active); return; }
+        if (e.key === '1' || e.key === '2') { e.preventDefault(); selectScenario(Number(e.key)); return; }
+      };
+      document.addEventListener('keydown', taskKeyHandler);
+
+      // Predictable starting point for keyboard (no auto-select)
+      focusScenarioRadio(initialSelected || 1);
+
+      // Nav buttons
+      if (idx === 0) {
+        document.getElementById('backBtn').onclick = renderIntro;
+      } else {
+        document.getElementById('prevBtn').onclick = () => saveAndNext(-1);
+      }
+
+      if (idx < assignedBlock.length - 1) {
+        document.getElementById('nextBtn').onclick = () => saveAndNext(1);
+      } else {
+        document.getElementById('submitBtn').onclick = function() {
+          this.disabled = true;
+          submitSurvey();
+        };
+      }
+    }
+
+    function saveAndNext(direction) {
+      // Allow going backward without forcing a selection
+      if (direction < 0) {
+        showTask(currentTask + direction);
+        return;
+      }
+
+      // Going forward: require a choice
+      const choice = document.querySelector('input[name="rb"]:checked');
+      if (!choice) {
+        alert("Please select Scenario 1 or Scenario 2 before continuing.");
+        return;
+      }
+      answers[currentTask] = choice.value;
+      showTask(currentTask + direction);
+    }
+
+    function submitSurvey() {
+      if (submissionInProgress) return;
+      submissionInProgress = true;
+
+      const choice = document.querySelector('input[name="rb"]:checked');
+      if(!choice) {
+        alert("Please select Scenario 1 or Scenario 2 before continuing.");
+        submissionInProgress = false;
+        return;
+      }
+      answers[currentTask] = choice.value;
+
+      // Persona calculation
+      let attrScores = Array(attributes.length).fill(0);
+      assignedBlock.forEach((task, t) => {
+        const [option1, option2] = task;
+        const chosen = answers[t]==="Option 1" ? option1 : option2;
+        const other  = answers[t]==="Option 1" ? option2 : option1;
+        for (let i=0; i<attributes.length; i++) {
+          if (chosen[i] > other[i]) attrScores[i]++;
+        }
+      });
+
+      const maxScore = Math.max(...attrScores);
+      const importantAttrIndex = attrScores.findIndex(s => s === maxScore);
+
+      // store for results page
+      sessionStorage.setItem("dc_results_personaIndex", String(importantAttrIndex));
+
+      // optional: store display strings (safer if you later change arrays)
+      sessionStorage.setItem("dc_results_personaName", personaInfo[importantAttrIndex].name);
+      sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
+      sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
+
+      // move to dedicated results page
+      window.location.href = "./results.html";
+    }
+
+    function init() {
+      // If user somehow lands here after a results run and wants a clean slate:
+      // (keep this light; remove if you want persistence)
+      // sessionStorage.removeItem("dc_results_personaIndex");
+
+      renderIntro();
+    }
+
+    init();
+  </script>
+</body>
+</html>

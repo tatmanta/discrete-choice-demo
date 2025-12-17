@@ -1,0 +1,256 @@
+<!-- results.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Your Values Profile | Discrete Choice Survey</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Your end-of-life values profile results.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+  <div class="proto-banner" role="status" aria-live="polite">
+    Prototype preview — visual & UX changes only (no data saved)
+  </div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="./index.html" aria-label="Home">DISCRETE CHOICE SURVEY</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <header class="page-head">
+      <h1 class="survey-title">Your Results</h1>
+      <p class="survey-subtitle">Your end-of-life values profile.</p>
+    </header>
+
+    <section id="resultsMount"></section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div>© 2025 · Research tool · Not medical or legal advice</div>
+    </div>
+  </footer>
+
+  <script>
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function renderResults(){
+      const mount = document.getElementById('resultsMount');
+
+      const personaName = sessionStorage.getItem("dc_results_personaName");
+      const valueType   = sessionStorage.getItem("dc_results_valueType");
+      const desc        = sessionStorage.getItem("dc_results_desc");
+
+      if (!personaName || !valueType || !desc) {
+        mount.innerHTML = `
+          <div class="survey-card">
+            <p class="kicker">No results found</p>
+            <p class="result-sub">Please take the survey first.</p>
+            <div class="btn-row result-actions">
+              <a class="btn btn-primary" href="./index.html">Start survey</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // --- Mock aggregate data (example only) ---
+      // In production you’d populate this from your backend / analytics pipeline.
+      const mockDistribution = [
+        { label: "The Trusted Soul",   value: 22 },
+        { label: "The Peace Seeker",   value: 18 },
+        { label: "The Comfort Guardian", value: 16 },
+        { label: "The Legacy Weaver",  value: 21 },
+        { label: "The Order Keeper",   value: 23 }
+      ];
+
+      const maxVal = Math.max(...mockDistribution.map(d => d.value));
+      const safePersonaName = escapeHtml(personaName);
+      const safeValueType = escapeHtml(valueType);
+      const safeDesc = escapeHtml(desc);
+
+      // Share content (kept generic; avoids encouraging sharing sensitive details)
+      const shareUrl = window.location.origin + window.location.pathname; // results page URL
+      const shareText = `I took the Discrete Choice Survey and got a values profile: ${personaName}.`;
+      const shareTextEnc = encodeURIComponent(shareText);
+      const shareUrlEnc = encodeURIComponent(shareUrl);
+
+      const linkedInHref = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrlEnc}`;
+      const xHref = `https://twitter.com/intent/tweet?text=${shareTextEnc}&url=${shareUrlEnc}`;
+      const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${shareUrlEnc}`;
+      const emailHref = `mailto:?subject=${encodeURIComponent("My values profile results")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`;
+
+      mount.innerHTML = `
+        <div class="survey-card">
+          <p class="kicker">Your end-of-life values profile</p>
+          <h2 class="result-title" id="resultTitle" tabindex="-1">${safePersonaName}</h2>
+          <p class="result-sub"><strong>Value type:</strong> ${safeValueType}</p>
+
+          <div class="result-description">${safeDesc}</div>
+
+          <!-- Aggregate comparison (mock) -->
+            <div class="dist-card" aria-label="Aggregate results comparison">
+            <div class="dist-head">
+                <h3 class="dist-title">How others scored</h3>
+                <p class="dist-sub">
+                Anonymous, aggregate distribution across profiles.
+                <span class="dist-n">N = 10,231</span>
+                <span class="dist-note">(mock data for prototype)</span>
+                </p>
+            </div>
+
+            <div class="dist-chart" role="list" aria-label="Distribution by profile">
+                ${mockDistribution.map(d => {
+                const isYou = d.label === personaName;
+                const pct = (d.value / maxVal) * 100;
+                return `
+                    <div class="bar-row" role="listitem">
+                    <div class="bar-label">
+                        <span class="${isYou ? 'bar-you' : ''}">
+                        ${escapeHtml(d.label)}${isYou ? ' (you)' : ''}
+                        </span>
+                    </div>
+                    <div class="bar-track" aria-label="${escapeHtml(d.label)} ${d.value}%">
+                        <div class="bar-fill ${isYou ? 'is-you' : ''}" style="width:${pct}%"></div>
+                    </div>
+                    <div class="bar-val">${d.value}%</div>
+                    </div>
+                `;
+                }).join("")}
+            </div>
+            </div>
+
+          <!-- Share -->
+          <div class="share-card" aria-label="Share results">
+            <div class="share-head">
+              <h3 class="share-title">Share</h3>
+              <p class="share-sub">Share the survey with your community. You can also copy the link.</p>
+            </div>
+
+            <div class="share-row">
+              <button type="button" class="icon-btn" id="nativeShareBtn" aria-label="Share">
+                <span class="icon" aria-hidden="true">
+                  <!-- share icon -->
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M16 8a3 3 0 1 0-2.83-4H13a3 3 0 0 0 3 4ZM6 14a3 3 0 1 0 2.83 4H9a3 3 0 0 0-3-4Zm10 0a3 3 0 1 0 2.83 4H19a3 3 0 0 0-3-4ZM8.6 15.1l6.8-3.2m-6.8-3L15.4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span>Share</span>
+              </button>
+
+              <a class="icon-btn" href="${linkedInHref}" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+                <span class="icon" aria-hidden="true">
+                  <!-- LinkedIn -->
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.1c.5-.9 1.8-2 3.7-2 3.9 0 4.6 2.6 4.6 6v6.3h-4v-5.6c0-1.3 0-3-1.9-3s-2.2 1.4-2.2 2.9V21h-4V9Z"/></svg>
+                </span>
+                <span>LinkedIn</span>
+              </a>
+
+              <a class="icon-btn" href="${xHref}" target="_blank" rel="noopener" aria-label="Share on X">
+                <span class="icon" aria-hidden="true">
+                  <!-- X -->
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23 22h-6.7l-5.2-6.8L5.3 22H2l7.3-8.4L1 2h6.8l4.7 6.1L18.9 2Zm-1.2 18h1.7L6.2 3.9H4.4L17.7 20Z"/></svg>
+                </span>
+                <span>X</span>
+              </a>
+
+              <a class="icon-btn" href="${fbHref}" target="_blank" rel="noopener" aria-label="Share on Facebook">
+                <span class="icon" aria-hidden="true">
+                  <!-- Facebook -->
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-8h2.7l.4-3.1h-3.1V9c0-.9.3-1.5 1.6-1.5H16.7V4.7c-.3 0-1.4-.1-2.6-.1-2.6 0-4.3 1.6-4.3 4.5v1.8H7V14h2.8v8h3.7Z"/></svg>
+                </span>
+                <span>Facebook</span>
+              </a>
+
+              <a class="icon-btn" href="${emailHref}" aria-label="Share via email">
+                <span class="icon" aria-hidden="true">
+                  <!-- mail -->
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6Zm0 0 8 7 8-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span>Email</span>
+              </a>
+
+              <button type="button" class="icon-btn" id="copyLinkBtn" aria-label="Copy link">
+                <span class="icon" aria-hidden="true">
+                  <!-- link -->
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 1 0-7l1.2-1.2a5 5 0 0 1 7 7L17 12M14 11a5 5 0 0 1 0 7L12.8 19.2a5 5 0 0 1-7-7L7 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span>Copy link</span>
+              </button>
+            </div>
+
+            <p class="share-note" id="shareNote" aria-live="polite"></p>
+          </div>
+
+          <div class="btn-row result-actions">
+            <button type="button" class="btn btn-ghost" id="restartBtn">Take again</button>
+          </div>
+
+          <p class="fineprint">Prototype only — no responses are saved.</p>
+        </div>
+      `;
+
+      // Focus title for SR users after navigation
+      const title = document.getElementById('resultTitle');
+      if (title) title.focus();
+
+      // Restart
+      document.getElementById('restartBtn').onclick = () => {
+        sessionStorage.removeItem("dc_results_personaIndex");
+        sessionStorage.removeItem("dc_results_personaName");
+        sessionStorage.removeItem("dc_results_valueType");
+        sessionStorage.removeItem("dc_results_desc");
+        window.location.href = "./index.html";
+      };
+
+      // Native share (best experience on mobile)
+      const nativeBtn = document.getElementById("nativeShareBtn");
+      if (!navigator.share) {
+        nativeBtn.style.display = "none";
+      } else {
+        nativeBtn.addEventListener("click", async () => {
+          try {
+            await navigator.share({ title: "Values Profile Results", text: shareText, url: shareUrl });
+          } catch (_) { /* user cancelled */ }
+        });
+      }
+
+      // Copy link
+      const copyBtn = document.getElementById("copyLinkBtn");
+      const note = document.getElementById("shareNote");
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          note.textContent = "Link copied.";
+        } catch (e) {
+          // fallback
+          const tmp = document.createElement("input");
+          tmp.value = shareUrl;
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand("copy");
+          document.body.removeChild(tmp);
+          note.textContent = "Link copied.";
+        }
+        setTimeout(() => { note.textContent = ""; }, 2000);
+      });
+    }
+
+    renderResults();
+  </script>
+</body>
+</html>
