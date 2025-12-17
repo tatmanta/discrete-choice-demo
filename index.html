@@ -310,9 +310,17 @@
       }
 
       function focusScenarioRadio(scenarioNum){
-        setRovingFocus(scenarioNum);
-        (scenarioNum === 1 ? sc1ChoiceCell : sc2ChoiceCell).focus();
+      setRovingFocus(scenarioNum);
+      const el = (scenarioNum === 1 ? sc1ChoiceCell : sc2ChoiceCell);
+
+      // Prevent focus from scrolling the page (supported in modern browsers)
+      try {
+        el.focus({ preventScroll: true });
+      } catch (e) {
+        el.focus(); // fallback
       }
+    }
+
 
       // Initialize selection + focus model
       const initialSelected = selectedScenarioFromAnswers();
@@ -361,6 +369,7 @@
 
       // Predictable starting point for keyboard (no auto-select)
       focusScenarioRadio(initialSelected || 1);
+      requestAnimationFrame(() => scrollToTopInstant());
 
       // Nav buttons
       if (idx === 0) {
