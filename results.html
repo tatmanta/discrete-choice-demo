@@ -86,15 +86,16 @@
       const safeDesc = escapeHtml(desc);
 
       // Share content (kept generic; avoids encouraging sharing sensitive details)
-      const shareUrl = window.location.origin + window.location.pathname; // results page URL
+      const shareUrl = new URL("./index.html", window.location.href).href; // always points to home
       const shareText = `I took the Discrete Choice Survey and got a values profile: ${personaName}.`;
+
       const shareTextEnc = encodeURIComponent(shareText);
       const shareUrlEnc = encodeURIComponent(shareUrl);
 
       const linkedInHref = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrlEnc}`;
       const xHref = `https://twitter.com/intent/tweet?text=${shareTextEnc}&url=${shareUrlEnc}`;
       const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${shareUrlEnc}`;
-      const emailHref = `mailto:?subject=${encodeURIComponent("My values profile results")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`;
+      const emailHref = `mailto:?subject=${encodeURIComponent("Try this values survey")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`;
 
       mount.innerHTML = `
         <div class="survey-card">

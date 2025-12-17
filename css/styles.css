@@ -390,8 +390,8 @@ table.scenarioTbl tr:last-child > *{
 .table-wrap{
   background: #fff;
   box-shadow: 0 10px 30px rgba(17,19,24,0.06);
-  overflow: hidden;            /* enables rounded corners cleanly */
-} */
+  overflow: hidden;
+*/
 
 /* Sticky header (helps feel like a modern app) */
 table.scenarioTbl thead th{
