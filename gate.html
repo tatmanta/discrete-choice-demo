@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Access Required</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <main class="page">
+    <div class="survey-card" style="max-width:560px;margin:40px auto;">
+      <p class="kicker">Prototype access</p>
+      <h1 class="result-title" style="margin-bottom:8px;">Enter access code</h1>
+      <p class="result-sub">This link is shared only with invited reviewers.</p>
+
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <input
+          id="codeInput"
+          type="password"
+          inputmode="text"
+          autocomplete="one-time-code"
+          placeholder="Access code"
+          style="flex:1; min-width:220px; padding:12px 14px; border-radius:12px; border:1px solid rgba(17,19,24,0.12); font:inherit;"
+        />
+        <button class="btn btn-primary" id="unlockBtn" type="button">Unlock</button>
+      </div>
+
+      <p class="fineprint" id="msg" aria-live="polite" style="text-align:left;"></p>
+    </div>
+  </main>
+
+  <script>
+    // IMPORTANT: set your code here
+    const input = document.getElementById("codeInput");
+    const btn = document.getElementById("unlockBtn");
+    const msg = document.getElementById("msg");
+
+    async function unlock() {
+    const val = (input.value || "").trim();
+    try {
+        const r = await fetch(`/unlock?code=${encodeURIComponent(val)}`, { method: "GET" });
+        if (r.ok) {
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next") || "/index.html";
+        window.location.href = next;
+        return;
+        }
+    } catch (_) {}
+
+    msg.textContent = "Incorrect code.";
+    input.focus();
+    input.select();
+    }
+
+    btn.addEventListener("click", unlock);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") unlock();
+    });
+
+    input.focus();
+  </script>
+</body>
+</html>
