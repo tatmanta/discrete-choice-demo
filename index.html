@@ -112,6 +112,19 @@
     let answers = null;
     let submissionInProgress = false;
 
+    // ---- scroll management (mobile-safe) ----
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    function scrollToTopInstant() {
+      // Use both for iOS + overflow containers
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+
+
     // one handler reused across tasks, removed/re-added each render
     let taskKeyHandler = null;
 
@@ -124,6 +137,7 @@
 
     function renderIntro(){
       clearTaskKeyHandler();
+       scrollToTopInstant();
 
       document.getElementById('mainBlock').innerHTML = `
         <div class="survey-card">
@@ -162,6 +176,7 @@
 
     function showTask(idx) {
       clearTaskKeyHandler();
+      scrollToTopInstant();
 
       currentTask = idx;
       const task = assignedBlock[idx];
@@ -429,5 +444,6 @@
 
     init();
   </script>
+
 </body>
 </html>
