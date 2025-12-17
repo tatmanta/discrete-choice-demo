@@ -202,7 +202,22 @@ a:hover{ text-decoration: underline; }
   width: 0%;
 }
 
-/* Table */
+/* Table container: allow horizontal scroll on mobile */
+.table-wrap{
+  max-width: 100%;
+  overflow-x: auto;              /* enables sideways scroll */
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(17,19,24,0.06);
+  touch-action: pan-x pan-y;
+  clip-path: inset(0 round 12px);
+}
+
+
+/* Table old
 .table-wrap{
   overflow-x: auto;
   overflow-y: visible;
@@ -210,7 +225,7 @@ a:hover{ text-decoration: underline; }
   border-radius: 12px;
   max-width: 100%;
   border: 1px solid var(--border2);
-}
+} */
 
 table.scenarioTbl{
   width: 100%;
@@ -371,12 +386,12 @@ table.scenarioTbl tr:last-child > *{
   --zebra: rgba(17,19,24,0.015);
 }
 
-/* Give the table container a "card within card" feel */
+/* Give the table container a "card within card" feel - old
 .table-wrap{
   background: #fff;
   box-shadow: 0 10px 30px rgba(17,19,24,0.06);
   overflow: hidden;            /* enables rounded corners cleanly */
-}
+} */
 
 /* Sticky header (helps feel like a modern app) */
 table.scenarioTbl thead th{
