@@ -15,17 +15,19 @@ const PUBLIC_FILES = new Set([
 app.use((req, res, next) => {
   const p = req.path;
 
-  // allow gate + assets
-  if (
+    // allow gate + assets + unlock endpoint
+    if (
+    p === "/unlock" ||                 // ✅ ADD THIS
     p === "/gate" ||
     p === "/gate.html" ||
     p.startsWith("/css/") ||
     p.startsWith("/img/") ||
     p.startsWith("/assets/") ||
     PUBLIC_FILES.has(p)
-  ) {
+    ) {
     return next();
-  }
+    }
+
 
   // If already authorized via cookie, allow
   const cookie = req.headers.cookie || "";
@@ -52,10 +54,9 @@ app.get("/unlock", (req, res) => {
 
   // Session cookie (expires when browser closes)
   res.setHeader(
-    "Set-Cookie",
-    "dc_access_ok=1; Path=/; SameSite=Lax; HttpOnly"
-  );
-  return res.send("OK");
+  "Set-Cookie",
+  `dc_access_ok=1; Path=/; SameSite=Lax; HttpOnly${process.env.NODE_ENV === "production" ? "; Secure" : ""}`
+);
 });
 
 // Friendly routes
