@@ -69,3 +69,10 @@ app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/results", (req, res) => res.sendFile(path.join(__dirname, "results.html")));
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+
+// ---- App constants ----
+const APP_VERSION = "2026-01-05";
+const ENV = process.env.NODE_ENV || "prod";
+const DEDUPE_WINDOW_MINUTES = 60;
+

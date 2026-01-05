@@ -112,18 +112,45 @@
     let answers = null;
     let submissionInProgress = false;
 
+    // ---- App metadata ----
+    const APP_VERSION = "2026-01-05";
+    const ENV = "prod"; // or "staging"
+
+    // ---- Session + run identifiers ----
+    const sessionId =
+      sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
+    sessionStorage.setItem("dc_session_id", sessionId);
+
+    // One per survey attempt (reset on Start)
+    let clientRunId = null;
+
+    // ---- Dedupe policy (client-side label; server enforces later) ----
+    const DEDUPE_WINDOW_MINUTES = 60;
+
+    // ---- Helpers ----
+    function safeJsonStringify(val) {
+      try { return JSON.stringify(val); } catch { return "null"; }
+    }
+
+    async function sha256Hex(input) {
+      // crypto.subtle requires secure context (https). Netlify/Railway ok; file:// not.
+      const data = new TextEncoder().encode(String(input));
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
     // ---- scroll management (mobile-safe) ----
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
 
     function scrollToTopInstant() {
-      // Use both for iOS + overflow containers
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     }
-
 
     // one handler reused across tasks, removed/re-added each render
     let taskKeyHandler = null;
@@ -137,7 +164,7 @@
 
     function renderIntro(){
       clearTaskKeyHandler();
-       scrollToTopInstant();
+      scrollToTopInstant();
 
       document.getElementById('mainBlock').innerHTML = `
         <div class="survey-card">
@@ -154,6 +181,9 @@
               Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
               and preferences as there are no right or wrong answers.
             </p>
+            <p class="fineprint" style="margin-top:12px">
+              Responses may be stored anonymously for research. No names or emails are collected.
+            </p>
           </div>
 
           <div class="cta-row">
@@ -167,9 +197,21 @@
       `;
 
       document.getElementById('startBtn').onclick = function() {
+        // ---- IDs for dedupe + session tracking ----
+        clientRunId = crypto.randomUUID();
+        sessionStorage.setItem("dc_client_run_id", clientRunId);
+
+        // Clear prior results so "Back" doesn't resurrect stale state
+        sessionStorage.removeItem("dc_results_personaIndex");
+        sessionStorage.removeItem("dc_results_personaName");
+        sessionStorage.removeItem("dc_results_valueType");
+        sessionStorage.removeItem("dc_results_desc");
+
+        // ---- Assign randomized block + initialize answers ----
         blockIndex = Math.floor(Math.random() * blocks.length);
         assignedBlock = blocks[blockIndex];
         answers = Array(assignedBlock.length).fill(null);
+
         showTask(0);
       };
     }
@@ -251,7 +293,7 @@
             }
           </div>
 
-          <p class="fineprint">Prototype only — no responses are saved.</p>
+          <p class="fineprint">Prototype preview — responses may be stored anonymously for research.</p>
         </div>
       `;
 
@@ -304,31 +346,21 @@
           setRovingFocus(2);
         }
 
-        // after selection, send focus to Next/Submit (fast keyboard flow)
         const nextBtn = document.getElementById('nextBtn') || document.getElementById('submitBtn');
         if (nextBtn) nextBtn.focus();
       }
 
       function focusScenarioRadio(scenarioNum){
-      setRovingFocus(scenarioNum);
-      const el = (scenarioNum === 1 ? sc1ChoiceCell : sc2ChoiceCell);
-
-      // Prevent focus from scrolling the page (supported in modern browsers)
-      try {
-        el.focus({ preventScroll: true });
-      } catch (e) {
-        el.focus(); // fallback
+        setRovingFocus(scenarioNum);
+        const el = (scenarioNum === 1 ? sc1ChoiceCell : sc2ChoiceCell);
+        try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
       }
-    }
 
-
-      // Initialize selection + focus model
       const initialSelected = selectedScenarioFromAnswers();
       if (initialSelected === 1) { updateColHighlight(1); updateAriaChecked(1); setRovingFocus(1); }
       else if (initialSelected === 2) { updateColHighlight(2); updateAriaChecked(2); setRovingFocus(2); }
       else { updateAriaChecked(0); setRovingFocus(1); }
 
-      // Column click/hover
       table.querySelectorAll('[data-scn="1"]').forEach(el => {
         el.addEventListener('click', () => selectScenario(1));
         el.addEventListener('mouseenter', () => setHover(1, true));
@@ -350,7 +382,6 @@
         return 1;
       }
 
-      // Document-level key handler (reliable on Q1)
       taskKeyHandler = (e) => {
         const wrapNow = document.querySelector('.table-wrap');
         if (!wrapNow) return;
@@ -367,11 +398,9 @@
       };
       document.addEventListener('keydown', taskKeyHandler);
 
-      // Predictable starting point for keyboard (no auto-select)
       focusScenarioRadio(initialSelected || 1);
       requestAnimationFrame(() => scrollToTopInstant());
 
-      // Nav buttons
       if (idx === 0) {
         document.getElementById('backBtn').onclick = renderIntro;
       } else {
@@ -389,13 +418,11 @@
     }
 
     function saveAndNext(direction) {
-      // Allow going backward without forcing a selection
       if (direction < 0) {
         showTask(currentTask + direction);
         return;
       }
 
-      // Going forward: require a choice
       const choice = document.querySelector('input[name="rb"]:checked');
       if (!choice) {
         alert("Please select Scenario 1 or Scenario 2 before continuing.");
@@ -405,7 +432,7 @@
       showTask(currentTask + direction);
     }
 
-    function submitSurvey() {
+    async function submitSurvey() {
       if (submissionInProgress) return;
       submissionInProgress = true;
 
@@ -433,21 +460,67 @@
 
       // store for results page
       sessionStorage.setItem("dc_results_personaIndex", String(importantAttrIndex));
-
-      // optional: store display strings (safer if you later change arrays)
       sessionStorage.setItem("dc_results_personaName", personaInfo[importantAttrIndex].name);
       sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
       sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
+
+      // ---- Build dedupe key + payload for logging ----
+      // If clientRunId is somehow missing (deep link), create it now.
+      if (!clientRunId) {
+        clientRunId = sessionStorage.getItem("dc_client_run_id") || crypto.randomUUID();
+        sessionStorage.setItem("dc_client_run_id", clientRunId);
+      }
+
+      const answersJson = safeJsonStringify(answers);
+      const attrScoresJson = safeJsonStringify(attrScores);
+
+      let dedupeKey = "";
+      try {
+        // stable fingerprint: app version + block + answers
+        dedupeKey = await sha256Hex([APP_VERSION, blockIndex, answersJson].join("|"));
+      } catch (e) {
+        // fallback if crypto.subtle unavailable (shouldn't happen on https)
+        dedupeKey = [APP_VERSION, blockIndex, clientRunId].join("|");
+      }
+
+      const payload = {
+        app_version: APP_VERSION,
+        env: ENV,
+        session_id: sessionId,
+        client_run_id: clientRunId,
+        dedupe_key: dedupeKey,
+        dedupe_window_minutes: DEDUPE_WINDOW_MINUTES,
+        block_index: blockIndex,
+        n_questions: assignedBlock.length,
+        answers_json: answersJson,
+        attr_scores_json: attrScoresJson,
+        winner_attr_index: importantAttrIndex,
+        winner_value_type: personaInfo[importantAttrIndex].value,
+        winner_persona_name: personaInfo[importantAttrIndex].name,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+        language: navigator.language || "",
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || "",
+        page_url: window.location.href
+      };
+
+      // ---- Log (fail open) ----
+      try {
+        // This endpoint will exist once you add the Netlify Function.
+        await fetch("/.netlify/functions/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: safeJsonStringify(payload)
+        });
+      } catch (e) {
+        console.warn("Logging failed; continuing", e);
+      }
 
       // move to dedicated results page
       window.location.href = "./results.html";
     }
 
     function init() {
-      // If user somehow lands here after a results run and wants a clean slate:
-      // (keep this light; remove if you want persistence)
-      // sessionStorage.removeItem("dc_results_personaIndex");
-
       renderIntro();
     }
 
