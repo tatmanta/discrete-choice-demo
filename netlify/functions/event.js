@@ -6,7 +6,7 @@ function jsonResponse(statusCode, data) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers": "Content-Type",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
     },
     body: JSON.stringify(data),
@@ -30,6 +30,10 @@ exports.handler = async (event) => {
   if (!SHEETDB_URL) {
     return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
   }
+
+  // For debugging
+  console.log("SHEETDB_URL prefix:", String(SHEETDB_URL).slice(0, 120));
+
 
   const body = safeJsonParse(event.body || "");
   if (!body) return jsonResponse(400, { ok: false, error: "Invalid JSON" });
