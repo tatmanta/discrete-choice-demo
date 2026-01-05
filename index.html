@@ -252,6 +252,8 @@
         assignedBlock = blocks[blockIndex];
         answers = Array(assignedBlock.length).fill(null);
 
+        logEvent("survey_start", `blockIndex=${blockIndex}`);
+
         showTask(0);
       };
     }
@@ -469,6 +471,9 @@
         return;
       }
       answers[currentTask] = choice.value;
+
+      logEvent("question_answered", `q=${currentTask + 1}|choice=${choice.value}`);
+
       showTask(currentTask + direction);
     }
 
@@ -503,6 +508,12 @@
       sessionStorage.setItem("dc_results_personaName", personaInfo[importantAttrIndex].name);
       sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
       sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
+
+      // ✅ C) Event log for submit (fire-and-forget)
+      logEvent(
+        "survey_submit",
+        `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`
+      );
 
       // ---- Build dedupe key + payload for logging ----
       // If clientRunId is somehow missing (deep link), create it now.
@@ -546,7 +557,6 @@
 
       // ---- Log (fail open) ----
       try {
-        // This endpoint will exist once you add the Netlify Function.
         await fetch("/.netlify/functions/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
