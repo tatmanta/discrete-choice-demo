@@ -50,6 +50,32 @@
         .replaceAll("'","&#039;");
     }
 
+    // ---- Wiring events fields → Netlify function (SAFE) ----
+    async function logEvent(event_name, event_value = "") {
+      try {
+        const session_id = sessionStorage.getItem("dc_session_id") || "";
+        if (!session_id || !event_name) return;
+
+        const payload = {
+          app_version: sessionStorage.getItem("dc_app_version") || "2026-01-05",
+          env: sessionStorage.getItem("dc_env") || "prod",
+          session_id,
+          client_run_id: sessionStorage.getItem("dc_client_run_id") || "",
+          event_name,
+          event_value: String(event_value || ""),
+          page_url: window.location.href || "",
+          referrer: document.referrer || "",
+          user_agent: navigator.userAgent || ""
+        };
+
+        fetch("/.netlify/functions/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
     function renderResults(){
       const mount = document.getElementById('resultsMount');
 
@@ -68,7 +94,10 @@
           </div>
         `;
         return;
-      }
+      }       
+      
+      // Log results view (only when real results exist)
+      logEvent("results_view", personaName);
 
       // --- Mock aggregate data (example only) ---
       // In production you’d populate this from your backend / analytics pipeline.

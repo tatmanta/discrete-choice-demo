@@ -121,6 +121,46 @@
       sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
     sessionStorage.setItem("dc_session_id", sessionId);
 
+    // ---- Wiring events fields → Netlify function (SAFE) ----
+    async function logEvent(event_name, event_value = "") {
+      // Hard guard: never throw, never block UX
+      try {
+        // Required IDs (fail quietly if missing)
+        if (!sessionId || !event_name) return;
+
+        const payload = {
+          app_version: APP_VERSION || "",
+          env: ENV || "",
+          session_id: sessionId,
+          client_run_id:
+            clientRunId ||
+            sessionStorage.getItem("dc_client_run_id") ||
+            "",
+          event_name,
+          event_value: String(event_value || ""),
+          page_url: window.location.href || "",
+          referrer: document.referrer || "",
+          user_agent: navigator.userAgent || ""
+        };
+
+          sessionStorage.setItem("dc_app_version", APP_VERSION);
+          sessionStorage.setItem("dc_env", ENV);
+
+        // Fire-and-forget (do not await response body)
+        fetch("/.netlify/functions/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).catch(() => {
+          /* swallow network errors */
+        });
+
+      } catch (e) {
+        // Never surface to user
+        console.warn("event logger failed silently");
+      }
+    }
+
     // One per survey attempt (reset on Start)
     let clientRunId = null;
 
