@@ -6,7 +6,7 @@ function jsonResponse(statusCode, data) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
     },
     body: JSON.stringify(data),
@@ -18,6 +18,7 @@ function safeJsonParse(str) {
 }
 
 exports.handler = async (event) => {
+  // Preflight
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(200, { ok: true });
   }
@@ -26,14 +27,14 @@ exports.handler = async (event) => {
     return jsonResponse(405, { ok: false, error: "Method not allowed" });
   }
 
-  const SHEETDB_URL = process.env.SHEETDB_URL;
-  if (!SHEETDB_URL) {
-    return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
-  }
+  const SHEETDB_URL = process.env.SHEETDB_URL;              // e.g. https://sheetdb.io/api/v1/2olmo0dqgayt4
+  const TOKEN = process.env.SHEETDB_BEARER_TOKEN;           // bearer token value (NOT in the URL)
 
-  // For debugging
+  if (!SHEETDB_URL) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
+  if (!TOKEN) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_BEARER_TOKEN env var" });
+
+  // Debug (safe: doesn’t print token)
   console.log("SHEETDB_URL prefix:", String(SHEETDB_URL).slice(0, 120));
-
 
   const body = safeJsonParse(event.body || "");
   if (!body) return jsonResponse(400, { ok: false, error: "Invalid JSON" });
@@ -70,21 +71,23 @@ exports.handler = async (event) => {
     session_id,
     client_run_id,
     event_name,
-    event_value,
+    event_value: String(event_value ?? ""),
     page_url,
     referrer,
     user_agent,
   };
 
-  // Option A: SHEETDB_URL already contains ?token=...
+  // ✅ Use Bearer auth + sheet param
   const SHEET_NAME = "Events";
-  const joiner = SHEETDB_URL.includes("?") ? "&" : "?";
-  const url = `${SHEETDB_URL}${joiner}sheet=${encodeURIComponent(SHEET_NAME)}`;
+  const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   try {
     const resp = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify({ data: [row] }),
     });
 
