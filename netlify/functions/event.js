@@ -51,7 +51,12 @@ exports.handler = async (event) => {
   }
 
   const nowIso = new Date().toISOString();
-  const event_id = crypto.randomUUID();
+
+  // safer UUID
+  const event_id =
+    (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function")
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
   const row = {
     event_id,
@@ -67,9 +72,10 @@ exports.handler = async (event) => {
     user_agent,
   };
 
-  // ✅ Correct SheetDB endpoint
+  // Option A: SHEETDB_URL already contains ?token=...
   const SHEET_NAME = "Events";
-  const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
+  const joiner = SHEETDB_URL.includes("?") ? "&" : "?";
+  const url = `${SHEETDB_URL}${joiner}sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   try {
     const resp = await fetch(url, {
