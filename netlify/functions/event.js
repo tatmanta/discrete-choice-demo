@@ -5,7 +5,7 @@ function jsonResponse(statusCode, data) {
     statusCode,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*", // ok for prototype; tighten later if needed
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
     },
@@ -14,15 +14,10 @@ function jsonResponse(statusCode, data) {
 }
 
 function safeJsonParse(str) {
-  try {
-    return JSON.parse(str);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(str); } catch { return null; }
 }
 
 exports.handler = async (event) => {
-  // Preflight
   if (event.httpMethod === "OPTIONS") {
     return jsonResponse(200, { ok: true });
   }
@@ -32,10 +27,9 @@ exports.handler = async (event) => {
   }
 
   const SHEETDB_URL = process.env.SHEETDB_URL;
-  const TOKEN = process.env.SHEETDB_BEARER_TOKEN;
-
-  if (!SHEETDB_URL) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
-  if (!TOKEN) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_BEARER_TOKEN env var" });
+  if (!SHEETDB_URL) {
+    return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
+  }
 
   const body = safeJsonParse(event.body || "");
   if (!body) return jsonResponse(400, { ok: false, error: "Invalid JSON" });
@@ -52,14 +46,12 @@ exports.handler = async (event) => {
     user_agent = "",
   } = body;
 
-  // Minimal validation
   if (!session_id || !event_name) {
-    return jsonResponse(400, { ok: false, error: "Missing required fields: session_id, event_name" });
+    return jsonResponse(400, { ok: false, error: "Missing session_id or event_name" });
   }
 
-  // Build row to match your "events" headers
   const nowIso = new Date().toISOString();
-  const event_id = (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`;
+  const event_id = crypto.randomUUID();
 
   const row = {
     event_id,
@@ -75,27 +67,26 @@ exports.handler = async (event) => {
     user_agent,
   };
 
-  // SheetDB: write to "events" tab
-  // IMPORTANT: your Google Sheet must have a tab named exactly: events
-  const url = `${SHEETDB_URL}/events`;
+  // ✅ Correct SheetDB endpoint
+  const SHEET_NAME = "Events";
+  const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   try {
     const resp = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${TOKEN}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data: [row] }),
     });
 
     const text = await resp.text();
+
     if (!resp.ok) {
       return jsonResponse(502, {
         ok: false,
         error: "SheetDB write failed",
         status: resp.status,
-        details: text,
+        used_url: url,
+        details: text.slice(0, 300),
       });
     }
 
