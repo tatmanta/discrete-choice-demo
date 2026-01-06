@@ -291,44 +291,51 @@
           </div>
 
           <div class="table-wrap" role="region" aria-label="Scenarios table">
-            <table class="scenarioTbl" id="scenarioTbl" role="radiogroup" aria-label="Scenario choice">
+            <table class="scenarioTbl" id="scenarioTbl" aria-label="Scenario choice">
               <thead>
                 <tr>
                   <th scope="col" style="width: 28%"></th>
-                  <th scope="col" class="centered scHead sc1head" data-scn="1" style="width: 36%">Scenario 1</th>
-                  <th scope="col" class="centered scHead sc2head" data-scn="2" style="width: 36%">Scenario 2</th>
+
+                  <th scope="col" class="centered scHead sc1head" data-scn="1" style="width: 36%">
+                    <label class="scHeadRadio">
+                      <input
+                        type="radio"
+                        name="rb"
+                        value="Option 1"
+                        id="radioSc1"
+                        ${answers[idx] === "Option 1" ? "checked" : ""}
+                      >
+                      <span>Scenario 1</span>
+                    </label>
+                  </th>
+
+                  <th scope="col" class="centered scHead sc2head" data-scn="2" style="width: 36%">
+                    <label class="scHeadRadio">
+                      <input
+                        type="radio"
+                        name="rb"
+                        value="Option 2"
+                        id="radioSc2"
+                        ${answers[idx] === "Option 2" ? "checked" : ""}
+                      >
+                      <span>Scenario 2</span>
+                    </label>
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
                 ${attributes.map((attr, i) => `
                   <tr>
                     <th scope="row" class="rowhead">${attr.name}</th>
-                    <td class="scCell sc1col" data-scn="1" tabindex="-1" role="button" aria-label="Select Scenario 1">
+                    <td class="scCell sc1col" data-scn="1" role="button" aria-label="Select Scenario 1">
                       ${attr.levels[profileA[i]]}
                     </td>
-                    <td class="scCell sc2col" data-scn="2" tabindex="-1" role="button" aria-label="Select Scenario 2">
+                    <td class="scCell sc2col" data-scn="2" role="button" aria-label="Select Scenario 2">
                       ${attr.levels[profileB[i]]}
                     </td>
                   </tr>
                 `).join('')}
-
-                <tr class="radarow">
-                  <th scope="row" class="rowhead">Your choice</th>
-
-                  <td class="centered scChoice sc1choice" data-scn="1" role="radio" aria-checked="false" tabindex="-1" aria-label="Scenario 1">
-                    <label class="radioPill">
-                      <input type="radio" name="rb" value="Option 1" ${answers[idx]==="Option 1"?"checked":""} id="radioSc1" tabindex="-1" aria-hidden="true">
-                      <span>Select</span>
-                    </label>
-                  </td>
-
-                  <td class="centered scChoice sc2choice" data-scn="2" role="radio" aria-checked="false" tabindex="-1" aria-label="Scenario 2">
-                    <label class="radioPill">
-                      <input type="radio" name="rb" value="Option 2" ${answers[idx]==="Option 2"?"checked":""} id="radioSc2" tabindex="-1" aria-hidden="true">
-                      <span>Select</span>
-                    </label>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
@@ -350,8 +357,8 @@
       `;
 
       const table = document.getElementById('scenarioTbl');
-      const sc1ChoiceCell = document.querySelector('.sc1choice');
-      const sc2ChoiceCell = document.querySelector('.sc2choice');
+      const rb1 = document.getElementById('radioSc1');
+      const rb2 = document.getElementById('radioSc2');
 
       function updateColHighlight(scenarioNum) {
         table.querySelectorAll('.selectedScenarioCol').forEach(el => el.classList.remove('selectedScenarioCol'));
@@ -364,93 +371,90 @@
         table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('hoverScenarioCol'));
       }
 
-      function selectedScenarioFromAnswers(){
-        if (answers[idx] === "Option 1") return 1;
-        if (answers[idx] === "Option 2") return 2;
-        const rb1 = document.getElementById('radioSc1');
-        const rb2 = document.getElementById('radioSc2');
+      function selectedScenario(){
         if (rb1 && rb1.checked) return 1;
         if (rb2 && rb2.checked) return 2;
         return null;
       }
 
-      function setRovingFocus(activeScenarioNum){
-        const is1 = activeScenarioNum === 1;
-        sc1ChoiceCell.tabIndex = is1 ? 0 : -1;
-        sc2ChoiceCell.tabIndex = is1 ? -1 : 0;
-      }
+      function selectScenario(scenarioNum, { focusNext = false } = {}) {
+        if (scenarioNum === 1) rb1.checked = true;
+        if (scenarioNum === 2) rb2.checked = true;
 
-      function updateAriaChecked(selectedScenarioNum){
-        sc1ChoiceCell.setAttribute('aria-checked', selectedScenarioNum === 1 ? 'true' : 'false');
-        sc2ChoiceCell.setAttribute('aria-checked', selectedScenarioNum === 2 ? 'true' : 'false');
-      }
+        updateColHighlight(scenarioNum);
 
-      function selectScenario(scenarioNum){
-        if (scenarioNum === 1) {
-          document.getElementById('radioSc1').checked = true;
-          updateColHighlight(1);
-          updateAriaChecked(1);
-          setRovingFocus(1);
-        } else {
-          document.getElementById('radioSc2').checked = true;
-          updateColHighlight(2);
-          updateAriaChecked(2);
-          setRovingFocus(2);
+        if (focusNext) {
+          const nextBtn = document.getElementById('nextBtn') || document.getElementById('submitBtn');
+          if (nextBtn) nextBtn.focus();
         }
-
-        const nextBtn = document.getElementById('nextBtn') || document.getElementById('submitBtn');
-        if (nextBtn) nextBtn.focus();
       }
 
-      function focusScenarioRadio(scenarioNum){
-        setRovingFocus(scenarioNum);
-        const el = (scenarioNum === 1 ? sc1ChoiceCell : sc2ChoiceCell);
-        try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
-      }
+      // Initial highlight (when returning to a question)
+      const initial = selectedScenario();
+      if (initial) updateColHighlight(initial);
 
-      const initialSelected = selectedScenarioFromAnswers();
-      if (initialSelected === 1) { updateColHighlight(1); updateAriaChecked(1); setRovingFocus(1); }
-      else if (initialSelected === 2) { updateColHighlight(2); updateAriaChecked(2); setRovingFocus(2); }
-      else { updateAriaChecked(0); setRovingFocus(1); }
-
+      // Clicking anywhere in a column selects it (header or cells)
       table.querySelectorAll('[data-scn="1"]').forEach(el => {
-        el.addEventListener('click', () => selectScenario(1));
+        el.addEventListener('click', (e) => {
+          // if you click directly on the radio, let the native event handle it
+          if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return;
+          selectScenario(1);
+        });
         el.addEventListener('mouseenter', () => setHover(1, true));
         el.addEventListener('mouseleave', () => setHover(1, false));
       });
+
       table.querySelectorAll('[data-scn="2"]').forEach(el => {
-        el.addEventListener('click', () => selectScenario(2));
+        el.addEventListener('click', (e) => {
+          if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return;
+          selectScenario(2);
+        });
         el.addEventListener('mouseenter', () => setHover(2, true));
         el.addEventListener('mouseleave', () => setHover(2, false));
       });
 
-      function getActiveScenarioFromFocus(){
-        if (document.activeElement && document.activeElement.dataset && document.activeElement.dataset.scn) {
-          const n = Number(document.activeElement.dataset.scn);
-          if (n === 1 || n === 2) return n;
-        }
-        if (sc1ChoiceCell.tabIndex === 0) return 1;
-        if (sc2ChoiceCell.tabIndex === 0) return 2;
-        return 1;
-      }
+      // Radios also drive highlight
+      rb1.addEventListener('change', () => selectScenario(1));
+      rb2.addEventListener('change', () => selectScenario(2));
 
+      // Keyboard: if focus is within the table, allow arrows to switch
       taskKeyHandler = (e) => {
-        const wrapNow = document.querySelector('.table-wrap');
-        if (!wrapNow) return;
+        if (!table.contains(document.activeElement)) return;
 
         const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-        if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+        if (tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
 
-        const active = getActiveScenarioFromFocus();
-
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); focusScenarioRadio(1); return; }
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); focusScenarioRadio(2); return; }
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); selectScenario(active); return; }
-        if (e.key === '1' || e.key === '2') { e.preventDefault(); selectScenario(Number(e.key)); return; }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectScenario(1);
+          rb1.focus();
+          return;
+        }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectScenario(2);
+          rb2.focus();
+          return;
+        }
+        if (e.key === '1' || e.key === '2') {
+          e.preventDefault();
+          selectScenario(Number(e.key));
+          return;
+        }
+        // Enter/Space: if a scenario is selected and focus is on table, jump to next
+        if (e.key === 'Enter' || e.key === ' ') {
+          const s = selectedScenario();
+          if (s) {
+            e.preventDefault();
+            selectScenario(s, { focusNext: true });
+          }
+        }
       };
       document.addEventListener('keydown', taskKeyHandler);
 
-      focusScenarioRadio(initialSelected || 1);
+      // Set a sane initial focus
+      if (rb1 && rb2) (rb1.checked ? rb1 : rb2.checked ? rb2 : rb1).focus();
+
       requestAnimationFrame(() => scrollToTopInstant());
 
       if (idx === 0) {
