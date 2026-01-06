@@ -418,38 +418,49 @@
       rb2.addEventListener('change', () => selectScenario(2));
 
       // Keyboard: if focus is within the table, allow arrows to switch
-      taskKeyHandler = (e) => {
-        if (!table.contains(document.activeElement)) return;
 
-        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-        if (tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+      // Keyboard: restore arrows + space behavior (like before)
+        taskKeyHandler = (e) => {
+          const wrapNow = document.querySelector('.table-wrap');
+          if (!wrapNow) return;
 
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          selectScenario(1);
-          rb1.focus();
-          return;
-        }
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-          e.preventDefault();
-          selectScenario(2);
-          rb2.focus();
-          return;
-        }
-        if (e.key === '1' || e.key === '2') {
-          e.preventDefault();
-          selectScenario(Number(e.key));
-          return;
-        }
-        // Enter/Space: if a scenario is selected and focus is on table, jump to next
-        if (e.key === 'Enter' || e.key === ' ') {
-          const s = selectedScenario();
-          if (s) {
+          // Only when focus is inside the table region
+          if (!wrapNow.contains(document.activeElement)) return;
+
+          // Don't hijack buttons/links/etc.
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+          if (tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+
+          const focusScenario = () => (document.activeElement === rb2 ? 2 : 1);
+
+          if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
             e.preventDefault();
-            selectScenario(s, { focusNext: true });
+            rb1.focus();
+            return;
           }
-        }
-      };
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            rb2.focus();
+            return;
+          }
+
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            selectScenario(focusScenario(), { focusNext: true });
+            return;
+          }
+
+          if (e.key === "1" || e.key === "2") {
+            e.preventDefault();
+            const n = Number(e.key);
+            (n === 1 ? rb1 : rb2).focus();
+            selectScenario(n, { focusNext: true });
+            return;
+          }
+        };
+        document.addEventListener("keydown", taskKeyHandler);
+
+
       document.addEventListener('keydown', taskKeyHandler);
 
       // Set a sane initial focus
