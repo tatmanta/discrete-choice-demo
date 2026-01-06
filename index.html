@@ -371,6 +371,11 @@
         table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('hoverScenarioCol'));
       }
 
+      function focusCol(scn, on){
+        // reuse your hover class to paint the whole column (header + cells)
+        setHover(scn, on);
+      }
+
       function selectedScenario(){
         if (rb1 && rb1.checked) return 1;
         if (rb2 && rb2.checked) return 2;
@@ -417,49 +422,61 @@
       rb1.addEventListener('change', () => selectScenario(1));
       rb2.addEventListener('change', () => selectScenario(2));
 
-      // Keyboard: if focus is within the table, allow arrows to switch
+      // Keyboard focus should highlight the whole column (including header)
+      rb1.addEventListener('focus', () => focusCol(1, true));
+      rb1.addEventListener('blur',  () => focusCol(1, false));
+
+      rb2.addEventListener('focus', () => focusCol(2, true));
+      rb2.addEventListener('blur',  () => focusCol(2, false));
 
       // Keyboard: restore arrows + space behavior (like before)
-        taskKeyHandler = (e) => {
-          const wrapNow = document.querySelector('.table-wrap');
-          if (!wrapNow) return;
+      taskKeyHandler = (e) => {
+        const wrapNow = document.querySelector('.table-wrap');
+        if (!wrapNow) return;
 
-          // Only when focus is inside the table region
-          if (!wrapNow.contains(document.activeElement)) return;
+        // Only when focus is inside the table region
+        if (!wrapNow.contains(document.activeElement)) return;
 
-          // Don't hijack buttons/links/etc.
-          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-          if (tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+        // Don't hijack native controls
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+        if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
 
-          const focusScenario = () => (document.activeElement === rb2 ? 2 : 1);
-
-          if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-            e.preventDefault();
-            rb1.focus();
-            return;
-          }
-          if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-            e.preventDefault();
-            rb2.focus();
-            return;
-          }
-
-          if (e.key === " " || e.key === "Enter") {
-            e.preventDefault();
-            selectScenario(focusScenario(), { focusNext: true });
-            return;
-          }
-
-          if (e.key === "1" || e.key === "2") {
-            e.preventDefault();
-            const n = Number(e.key);
-            (n === 1 ? rb1 : rb2).focus();
-            selectScenario(n, { focusNext: true });
-            return;
-          }
+        const focusScenario = (n) => {
+          setHover(1, false);
+          setHover(2, false);
+          setHover(n, true);
+          (n === 1 ? rb1 : rb2).focus();
         };
-        document.addEventListener("keydown", taskKeyHandler);
 
+        const focusedScenario = () => (document.activeElement === rb2 ? 2 : 1);
+
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          e.preventDefault();
+          focusScenario(1);
+          return;
+        }
+
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          e.preventDefault();
+          focusScenario(2);
+          return;
+        }
+
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          selectScenario(focusedScenario(), { focusNext: true });
+          return;
+        }
+
+        if (e.key === "1" || e.key === "2") {
+          e.preventDefault();
+          const n = Number(e.key);
+          focusScenario(n);
+          selectScenario(n, { focusNext: true });
+          return;
+        }
+      };
+      document.addEventListener("keydown", taskKeyHandler);
 
       document.addEventListener('keydown', taskKeyHandler);
 
