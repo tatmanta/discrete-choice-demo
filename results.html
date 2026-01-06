@@ -74,7 +74,8 @@
           event_detail: String(event_detail || ""),
           page_url: window.location.href || "",
           referrer: document.referrer || "",
-          user_agent: navigator.userAgent || ""
+          user_agent: navigator.userAgent || "",
+          user_id: localStorage.getItem("dc_user_id") || "",
         };
 
         fetch("/.netlify/functions/event", {
@@ -85,7 +86,146 @@
       } catch (_) {}
     }
 
-    function renderResults(){
+    // ----- fetch N on page load -----
+        async function fetchAggregateN() {
+      try {
+        const res = await fetch("/.netlify/functions/aggregate", { cache: "no-store" });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const n = Number(data?.n);
+        return Number.isFinite(n) ? n : null;
+      } catch {
+        return null;
+      }
+    }
+
+
+   async function renderResults(){
+  const mount = document.getElementById("resultsMount");
+
+  const personaName = sessionStorage.getItem("dc_results_personaName");
+  const valueType   = sessionStorage.getItem("dc_results_valueType");
+  const desc        = sessionStorage.getItem("dc_results_desc");
+
+  if (!personaName || !valueType || !desc) {
+    mount.innerHTML = `
+      <div class="survey-card">
+        <p class="kicker">No results found</p>
+        <p class="result-sub">Please take the survey first.</p>
+        <div class="btn-row result-actions">
+          <a class="btn btn-primary" href="./index.html">Start survey</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Results view
+  logEvent("results_view", personaName);
+
+  const safePersonaName = escapeHtml(personaName);
+  const safeValueType = escapeHtml(valueType);
+  const safeDesc = escapeHtml(desc);
+
+  const shareUrl = new URL("./index.html", window.location.href).href;
+  const shareText = "I took the Discrete Choice Survey and so should you.";
+
+  // ✅ Fetch real N (non-blocking UX: we’ll show “—” if missing)
+  const aggregateN = await fetchAggregateN();
+  const nLabel = Number.isFinite(aggregateN) ? aggregateN.toLocaleString() : "—";
+
+  mount.innerHTML = `
+    <div class="survey-card">
+      <p class="kicker">Your end-of-life values profile</p>
+      <h2 class="result-title" id="resultTitle" tabindex="-1">${safePersonaName}</h2>
+      <p class="result-sub"><strong>Value type:</strong> ${safeValueType}</p>
+      <div class="result-description">${safeDesc}</div>
+
+      <!-- ✅ Real N -->
+      <p class="fineprint" style="margin-top:10px">
+        Anonymous aggregate results · N = <span id="aggN">${nLabel}</span>
+      </p>
+
+      <div class="share-card" aria-label="Share results">
+        <div class="share-head">
+          <h3 class="share-title">Share</h3>
+          <p class="share-sub">Share the survey or copy the link.</p>
+        </div>
+
+        <div class="share-row">
+          <button class="icon-btn" id="nativeShareBtn" data-share="native">Share</button>
+          <a class="icon-btn" data-share="linkedin" target="_blank"
+             href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}">LinkedIn</a>
+          <a class="icon-btn" data-share="x" target="_blank"
+             href="https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}">X</a>
+          <a class="icon-btn" data-share="facebook" target="_blank"
+             href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}">Facebook</a>
+          <a class="icon-btn" data-share="email"
+             href="mailto:?subject=Try this values survey&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}">Email</a>
+          <button class="icon-btn" id="copyLinkBtn" data-share="copy_link">Copy link</button>
+        </div>
+
+        <p class="share-note" id="shareNote" aria-live="polite"></p>
+      </div>
+
+      <div class="btn-row result-actions">
+        <button class="btn btn-ghost" id="restartBtn">Take again</button>
+      </div>
+    </div>
+  `;
+
+  // Focus
+  document.getElementById("resultTitle").focus();
+
+  // Restart
+  document.getElementById("restartBtn").onclick = () => {
+    sessionStorage.clear();
+    window.location.href = "./index.html";
+  };
+
+  // ---- Share click tracking (single source of truth) ----
+  const shareCard = mount.querySelector(".share-card");
+  shareCard.addEventListener("click", e => {
+    const el = e.target.closest("[data-share]");
+    if (!el) return;
+    logEvent("share_click", el.dataset.share);
+  }, { capture: true });
+
+  // Native share
+  const nativeBtn = document.getElementById("nativeShareBtn");
+  if (!navigator.share) {
+    nativeBtn.style.display = "none";
+  } else {
+    nativeBtn.onclick = async () => {
+      try {
+        await navigator.share({ title: "Values Profile", text: shareText, url: shareUrl });
+        logEvent("share_success", "native");
+      } catch {
+        logEvent("share_cancel", "native");
+      }
+    };
+  }
+
+  // Copy link
+  const copyBtn = document.getElementById("copyLinkBtn");
+  const note = document.getElementById("shareNote");
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const tmp = document.createElement("input");
+      tmp.value = shareUrl;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand("copy");
+      document.body.removeChild(tmp);
+    }
+    note.textContent = "Link copied.";
+    logEvent("share_success", "copy_link");
+    setTimeout(() => note.textContent = "", 2000);
+  };
+}
+
       const mount = document.getElementById("resultsMount");
 
       const personaName = sessionStorage.getItem("dc_results_personaName");
@@ -200,9 +340,8 @@
         logEvent("share_success", "copy_link");
         setTimeout(() => note.textContent = "", 2000);
       };
-    }
 
-    renderResults();
+    renderResults().catch(() => {});
   </script>
 </body>
 </html>
