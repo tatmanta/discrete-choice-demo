@@ -55,6 +55,15 @@
     </div>
   </footer>
 
+  <!-- Loading overlay -->
+  <div id="submitLoadingOverlay" class="loading-overlay is-hidden" role="status" aria-live="polite" aria-busy="false">
+    <div class="loading-card">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p class="loading-title">Loading your profile…</p>
+      <p class="loading-sub">This usually takes a few seconds.</p>
+    </div>
+  </div>
+
   <script>
     const blocks = [
       [ [ [0,1,1,1,1], [1,2,0,0,0] ], [ [2,2,1,1,0], [1,0,0,0,1] ], [ [2,0,1,0,1], [0,1,0,1,0] ], [ [1,0,1,1,0], [0,2,0,0,1] ], [ [2,1,1,0,1], [0,2,0,1,0] ], [ [1,1,0,1,0], [2,2,1,0,1] ], [ [2,1,0,0,0], [0,0,1,1,1] ], [ [1,2,1,0,0], [0,1,0,1,1] ] ],
@@ -147,6 +156,21 @@
       }
     })();
 
+    // ---- Loading overlay helpers (GLOBAL; used on submit) ----
+    function showSubmitLoading(){
+      const el = document.getElementById("submitLoadingOverlay");
+      if (!el) return;
+      el.classList.remove("is-hidden");
+      el.setAttribute("aria-busy","true");
+    }
+
+    function hideSubmitLoading(){
+      const el = document.getElementById("submitLoadingOverlay");
+      if (!el) return;
+      el.classList.add("is-hidden");
+      el.setAttribute("aria-busy","false");
+    }
+
     // ---- Wiring events fields → Netlify function (SAFE) ----
     async function logEvent(event_name, event_value = "") {
       try {
@@ -228,50 +252,50 @@
       clearIntroKeyHandler();
       scrollToTopInstant();
 
-    document.getElementById('mainBlock').innerHTML = `
-      <div class="survey-card">
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card">
 
-        <figure class="intro-hero" aria-label="Survey introduction graphic">
-          <picture>
-            <source srcset="assets/choices graphic landscape.png" type="image/webp">
-            <img
-              src="assets/choices graphic landscape.png"
-              alt="Illustration representing end-of-life values and decision-making"
-              loading="eager"
-              decoding="async"
-              width="1584"
-              height="396"
-            />
-          </picture>
-        </figure>
+          <figure class="intro-hero" aria-label="Survey introduction graphic">
+            <picture>
+              <source srcset="assets/choices graphic landscape.png" type="image/webp">
+              <img
+                src="assets/choices graphic landscape.png"
+                alt="Illustration representing end-of-life values and decision-making"
+                loading="eager"
+                decoding="async"
+                width="1584"
+                height="396"
+              />
+            </picture>
+          </figure>
 
-        <div class="prose">
-          <p>
-            You will be asked to consider various scenarios related to end-of-life decisions. Each scenario is designed to
-            highlight the diverse considerations and choices that may arise as one approaches the end of life.
-          </p>
-          <p>
-            We recognize that the subject matter may be sensitive and challenging to contemplate, and we encourage you to
-            engage with each scenario to the best of your ability.
-          </p>
-          <p>
-            Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
-            and preferences as there are no right or wrong answers.
-          </p>
-          <p class="fineprint" style="margin-top:12px">
-            Responses may be stored anonymously for research. No names or emails are collected.
+          <div class="prose">
+            <p>
+              You will be asked to consider various scenarios related to end-of-life decisions. Each scenario is designed to
+              highlight the diverse considerations and choices that may arise as one approaches the end of life.
+            </p>
+            <p>
+              We recognize that the subject matter may be sensitive and challenging to contemplate, and we encourage you to
+              engage with each scenario to the best of your ability.
+            </p>
+            <p>
+              Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
+              and preferences as there are no right or wrong answers.
+            </p>
+            <p class="fineprint" style="margin-top:12px">
+              Responses may be stored anonymously for research. No names or emails are collected.
+            </p>
+          </div>
+
+          <div class="cta-row">
+            <button type="button" class="btn btn-primary" id="startBtn">Start survey</button>
+          </div>
+
+          <p class="fineprint">
+            <em>Takes less than 5 minutes.</em>
           </p>
         </div>
-
-        <div class="cta-row">
-          <button type="button" class="btn btn-primary" id="startBtn">Start survey</button>
-        </div>
-
-        <p class="fineprint">
-          <em>Takes less than 5 minutes.</em>
-        </p>
-      </div>
-    `;
+      `;
 
       const startBtn = document.getElementById('startBtn');
 
@@ -564,10 +588,16 @@
       if (submissionInProgress) return;
       submissionInProgress = true;
 
+      // ✅ STEP 4: show loading overlay immediately on submit click
+      // and yield one frame so the browser can paint it before heavy work / navigation
+      showSubmitLoading();
+      await new Promise(r => requestAnimationFrame(r));
+
       const choice = document.querySelector('input[name="rb"]:checked');
       if(!choice) {
         alert("Please select Scenario 1 or Scenario 2 before continuing.");
         submissionInProgress = false;
+        hideSubmitLoading();
         return;
       }
       answers[currentTask] = choice.value;
