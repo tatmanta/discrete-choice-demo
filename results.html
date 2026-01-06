@@ -15,15 +15,6 @@
 </head>
 
 <body class="results-page">
-  <!-- Loading overlay -->
-  <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true">
-    <div class="loading-card">
-      <div class="loading-spinner" aria-hidden="true"></div>
-      <p class="loading-title">Loading your profile…</p>
-      <p class="loading-sub">This usually takes a few seconds.</p>
-    </div>
-  </div>
-
   <header class="site-header">
     <div class="site-header-inner">
       <a class="site-brand" href="./index.html" aria-label="Home">DISCRETE CHOICE SURVEY</a>
@@ -46,31 +37,6 @@
   </footer>
 
   <script>
-    // ---- Loading overlay helpers ----
-    function showLoading(){
-      const el = document.getElementById("loadingOverlay");
-      if (!el) return;
-      el.classList.remove("is-hidden");
-      el.setAttribute("aria-busy", "true");
-    }
-
-    function hideLoading(){
-      const el = document.getElementById("loadingOverlay");
-      if (!el) return;
-      el.classList.add("is-hidden");
-      el.setAttribute("aria-busy", "false");
-    }
-
-    function setLoadingError(title, sub){
-      const overlay = document.getElementById("loadingOverlay");
-      if (!overlay) return;
-      const t = overlay.querySelector(".loading-title");
-      const s = overlay.querySelector(".loading-sub");
-      if (t) t.textContent = title || "Having trouble loading your profile";
-      if (s) s.textContent = sub || "Please refresh and try again.";
-      overlay.classList.remove("is-hidden"); // keep visible
-      overlay.setAttribute("aria-busy", "false");
-    }
 
     function escapeHtml(str){
       return String(str)
@@ -350,22 +316,10 @@
       }
 
       // done
-      hideLoading();
     }
+    
+    renderResults().catch(err => console.error(err));
 
-    // ---- Init ----
-    (async function initResults(){
-      showLoading();
-      try{
-        await renderResults();
-      } catch (err){
-        console.error(err);
-        setLoadingError(
-          "Having trouble loading your profile",
-          "Please refresh and try again."
-        );
-      }
-    })();
   </script>
 </body>
 </html>
