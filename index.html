@@ -437,9 +437,14 @@
         // Only when focus is inside the table region
         if (!wrapNow.contains(document.activeElement)) return;
 
-        // Don't hijack native controls
+        const activeEl = document.activeElement;
+
+        // Let keyboard control even when focus is on the radios
+        const isRadioFocus = (activeEl === rb1 || activeEl === rb2);
+
+        // Don't hijack other native controls
         const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-        if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+        if (!isRadioFocus && (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a")) return;
 
         const focusScenario = (n) => {
           setHover(1, false);
@@ -462,9 +467,11 @@
           return;
         }
 
+        // Space/Enter should select the focused scenario AND advance
         if (e.key === " " || e.key === "Enter") {
-          e.preventDefault();
-          selectScenario(focusedScenario(), { focusNext: true });
+          e.preventDefault(); // prevents page scroll on Space
+          const n = focusedScenario();
+          selectScenario(n, { focusNext: true });
           return;
         }
 
