@@ -99,186 +99,210 @@
       }
     }
 
-    async function renderResults(){
-      const mount = document.getElementById("resultsMount");
+async function renderResults(){
+  const mount = document.getElementById("resultsMount");
 
-      const personaName = sessionStorage.getItem("dc_results_personaName");
-      const valueType   = sessionStorage.getItem("dc_results_valueType");
-      const desc        = sessionStorage.getItem("dc_results_desc");
+  const personaName = sessionStorage.getItem("dc_results_personaName");
+  const valueType   = sessionStorage.getItem("dc_results_valueType");
+  const desc        = sessionStorage.getItem("dc_results_desc");
 
-      if (!personaName || !valueType || !desc) {
-        mount.innerHTML = `
-          <div class="survey-card">
-            <p class="kicker">No results found</p>
-            <p class="result-sub">Please take the survey first.</p>
-            <div class="btn-row result-actions">
-              <a class="btn btn-primary" href="./index.html">Start survey</a>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      // Results view
-      logEvent("results_view", personaName);
-
-      const safePersonaName = escapeHtml(personaName);
-      const safeValueType = escapeHtml(valueType);
-      const safeDesc = escapeHtml(desc);
-
-      const shareUrl = new URL("./index.html", window.location.href).href;
-      const shareText = "I took the Discrete Choice Survey and so should you.";
-
-      // Fetch real N
-      const aggregateN = await fetchAggregateN();
-      const nLabel = Number.isFinite(aggregateN) ? aggregateN.toLocaleString() : "—";
-
-
-      // --- TEMP: dummy distribution (until backend provides real distribution) ---
-      const mockDistribution = [
-        { label: "The Trusted Soul", value: 22 },
-        { label: "The Peace Seeker", value: 18 },
-        { label: "The Comfort Guardian", value: 16 },
-        { label: "The Legacy Weaver", value: 21 },
-        { label: "The Order Keeper", value: 23 }
-      ];
-
-      const maxVal = Math.max(...mockDistribution.map(d => d.value));
-
-
-
-      mount.innerHTML = `
-        <div class="survey-card">
-          <p class="kicker">Your end-of-life values profile</p>
-          <h2 class="result-title" id="resultTitle" tabindex="-1">${safePersonaName}</h2>
-          <p class="result-sub"><strong>Value type:</strong> ${safeValueType}</p>
-          <div class="result-description">${safeDesc}</div>
-
-          <p class="fineprint" style="margin-top:10px">
-            Anonymous aggregate results · N = <span id="aggN">${nLabel}</span>
-          </p>
-
-          ${distHtml}
-
-          <!-- Aggregate comparison (TEMP dummy data) -->
-          <div class="dist-card" aria-label="Aggregate results comparison">
-            <div class="dist-head">
-              <h3 class="dist-title">How others scored</h3>
-              <p class="dist-sub">
-                Anonymous, aggregate distribution across profiles.
-                <span class="dist-n">N = ${nLabel}</span>
-                <span class="dist-note">(distribution is mock for now)</span>
-              </p>
-            </div>
-
-            <div class="dist-chart" role="list" aria-label="Distribution by profile">
-              ${mockDistribution.map(d => {
-                const isYou = d.label === personaName;
-                const pct = (d.value / maxVal) * 100;
-                return `
-                  <div class="bar-row" role="listitem">
-                    <div class="bar-label">
-                      <span class="${isYou ? 'bar-you' : ''}">
-                        ${escapeHtml(d.label)}${isYou ? ' (you)' : ''}
-                      </span>
-                    </div>
-                    <div class="bar-track" aria-label="${escapeHtml(d.label)} ${d.value}%">
-                      <div class="bar-fill ${isYou ? 'is-you' : ''}" style="width:${pct}%"></div>
-                    </div>
-                    <div class="bar-val">${d.value}%</div>
-                  </div>
-                `;
-              }).join("")}
-            </div>
-          </div>
-
-
-          <div class="share-card" aria-label="Share results">
-            <div class="share-head">
-              <h3 class="share-title">Share</h3>
-              <p class="share-sub">Share the survey or copy the link.</p>
-            </div>
-
-            <div class="share-row">
-              <button class="icon-btn" id="nativeShareBtn" data-share="native">Share</button>
-              <a class="icon-btn" data-share="linkedin" target="_blank" rel="noopener"
-                href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}">LinkedIn</a>
-              <a class="icon-btn" data-share="x" target="_blank" rel="noopener"
-                href="https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}">X</a>
-              <a class="icon-btn" data-share="facebook" target="_blank" rel="noopener"
-                href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}">Facebook</a>
-              <a class="icon-btn" data-share="email"
-                href="mailto:?subject=Try this values survey&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}">Email</a>
-              <button class="icon-btn" id="copyLinkBtn" data-share="copy_link">Copy link</button>
-            </div>
-
-            <p class="share-note" id="shareNote" aria-live="polite"></p>
-          </div>
-
-          <div class="btn-row result-actions">
-            <button class="btn btn-ghost" id="restartBtn">Take again</button>
-          </div>
+  if (!personaName || !valueType || !desc) {
+    mount.innerHTML = `
+      <div class="survey-card">
+        <p class="kicker">No results found</p>
+        <p class="result-sub">Please take the survey first.</p>
+        <div class="btn-row result-actions">
+          <a class="btn btn-primary" href="./index.html">Start survey</a>
         </div>
-      `;
+      </div>
+    `;
+    return;
+  }
 
-      // Focus
-      const titleEl = document.getElementById("resultTitle");
-      if (titleEl) titleEl.focus();
+  // Results view
+  logEvent("results_view", personaName);
 
-      // Restart
-      document.getElementById("restartBtn").onclick = () => {
-        sessionStorage.clear();
-        window.location.href = "./index.html";
-      };
+  const safePersonaName = escapeHtml(personaName);
+  const safeValueType   = escapeHtml(valueType);
+  const safeDesc        = escapeHtml(desc);
 
-      // Share click tracking
-      const shareCard = mount.querySelector(".share-card");
-      if (shareCard) {
-        shareCard.addEventListener("click", e => {
-          const el = e.target.closest("[data-share]");
-          if (!el) return;
-          logEvent("share_click", el.dataset.share);
-        }, { capture: true });
-      }
+  const shareUrl  = new URL("./index.html", window.location.href).href;
+  const shareText = "I took the Discrete Choice Survey and so should you.";
 
-      // Native share
-      const nativeBtn = document.getElementById("nativeShareBtn");
-      if (nativeBtn) {
-        if (!navigator.share) {
-          nativeBtn.style.display = "none";
-        } else {
-          nativeBtn.onclick = async () => {
-            try {
-              await navigator.share({ title: "Values Profile", text: shareText, url: shareUrl });
-              logEvent("share_success", "native");
-            } catch {
-              logEvent("share_cancel", "native");
-            }
-          };
-        }
-      }
+  // ---- Aggregate N (deduped by user_id in aggregate.js) ----
+  const aggregateN = await fetchAggregateN();
+  const nLabel = Number.isFinite(aggregateN) ? aggregateN.toLocaleString() : "—";
 
-      // Copy link
-      const copyBtn = document.getElementById("copyLinkBtn");
-      const note = document.getElementById("shareNote");
-      if (copyBtn) {
-        copyBtn.onclick = async () => {
-          try {
-            await navigator.clipboard.writeText(shareUrl);
-          } catch {
-            const tmp = document.createElement("input");
-            tmp.value = shareUrl;
-            document.body.appendChild(tmp);
-            tmp.select();
-            document.execCommand("copy");
-            document.body.removeChild(tmp);
-          }
-          if (note) note.textContent = "Link copied.";
-          logEvent("share_success", "copy_link");
-          setTimeout(() => { if (note) note.textContent = ""; }, 2000);
-        };
-      }
+  // ---- Real distribution (deduped by user_id in distribution.js) ----
+  async function fetchDistribution() {
+    try {
+      const res = await fetch("/.netlify/functions/distribution", { cache: "no-store" });
+      if (!res.ok) return null;
+      const data = await res.json();
+      // expected: { n: <number>, buckets: [{label,count,pct}] }
+      if (!data || !Array.isArray(data.buckets)) return null;
+      return data;
+    } catch {
+      return null;
     }
+  }
+
+  const distData = await fetchDistribution();
+
+  // Build dist HTML (or empty string if missing)
+  let distHtml = "";
+  if (distData && distData.buckets.length) {
+    const distN = Number.isFinite(Number(distData.n)) ? Number(distData.n) : null;
+    const distNLabel = distN != null ? distN.toLocaleString() : nLabel;
+
+    distHtml = `
+      <div class="dist-card" aria-label="Aggregate results comparison">
+        <div class="dist-head">
+          <h3 class="dist-title">How others scored</h3>
+          <p class="dist-sub">
+            Anonymous, aggregate distribution across profiles.
+            <span class="dist-n">N = ${escapeHtml(distNLabel)}</span>
+          </p>
+        </div>
+
+        <div class="dist-chart" role="list" aria-label="Distribution by profile">
+          ${distData.buckets.map(b => {
+            const label = String(b.label || "");
+            const count = Number(b.count) || 0;
+            const pct   = Math.max(0, Math.min(100, Number(b.pct) || 0));
+            const isYou = label === personaName;
+
+            return `
+              <div class="bar-row" role="listitem">
+                <div class="bar-label">
+                  <span class="${isYou ? "bar-you" : ""}">
+                    ${escapeHtml(label)}${isYou ? " (you)" : ""}
+                  </span>
+                </div>
+
+                <div class="bar-track" aria-label="${escapeHtml(label)} ${pct}%">
+                  <div class="bar-fill ${isYou ? "is-you" : ""}" style="width:${pct}%"></div>
+                </div>
+
+                <div class="bar-val">${pct}% <span class="fineprint" style="margin-left:6px">(${count})</span></div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  } else {
+    // Optional: keep this silent (no UI) OR show a tiny note
+    distHtml = `
+      <p class="fineprint" style="margin-top:10px">
+        Aggregate distribution unavailable right now.
+      </p>
+    `;
+  }
+
+  // ---- Render page ----
+  mount.innerHTML = `
+    <div class="survey-card">
+      <p class="kicker">Your end-of-life values profile</p>
+      <h2 class="result-title" id="resultTitle" tabindex="-1">${safePersonaName}</h2>
+      <p class="result-sub"><strong>Value type:</strong> ${safeValueType}</p>
+      <div class="result-description">${safeDesc}</div>
+
+      <p class="fineprint" style="margin-top:10px">
+        Anonymous aggregate results · N = <span id="aggN">${escapeHtml(nLabel)}</span>
+      </p>
+
+      ${distHtml}
+
+      <div class="share-card" aria-label="Share results">
+        <div class="share-head">
+          <h3 class="share-title">Share</h3>
+          <p class="share-sub">Share the survey or copy the link.</p>
+        </div>
+
+        <div class="share-row">
+          <button class="icon-btn" id="nativeShareBtn" data-share="native">Share</button>
+          <a class="icon-btn" data-share="linkedin" target="_blank" rel="noopener"
+            href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}">LinkedIn</a>
+          <a class="icon-btn" data-share="x" target="_blank" rel="noopener"
+            href="https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}">X</a>
+          <a class="icon-btn" data-share="facebook" target="_blank" rel="noopener"
+            href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}">Facebook</a>
+          <a class="icon-btn" data-share="email"
+            href="mailto:?subject=Try this values survey&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}">Email</a>
+          <button class="icon-btn" id="copyLinkBtn" data-share="copy_link">Copy link</button>
+        </div>
+
+        <p class="share-note" id="shareNote" aria-live="polite"></p>
+      </div>
+
+      <div class="btn-row result-actions">
+        <button class="btn btn-ghost" id="restartBtn">Take again</button>
+      </div>
+    </div>
+  `;
+
+  // Focus
+  const titleEl = document.getElementById("resultTitle");
+  if (titleEl) titleEl.focus();
+
+  // Restart
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    restartBtn.onclick = () => {
+      sessionStorage.clear();
+      window.location.href = "./index.html";
+    };
+  }
+
+  // Share click tracking
+  const shareCard = mount.querySelector(".share-card");
+  if (shareCard) {
+    shareCard.addEventListener("click", e => {
+      const el = e.target.closest("[data-share]");
+      if (!el) return;
+      logEvent("share_click", el.dataset.share);
+    }, { capture: true });
+  }
+
+  // Native share
+  const nativeBtn = document.getElementById("nativeShareBtn");
+  if (nativeBtn) {
+    if (!navigator.share) {
+      nativeBtn.style.display = "none";
+    } else {
+      nativeBtn.onclick = async () => {
+        try {
+          await navigator.share({ title: "Values Profile", text: shareText, url: shareUrl });
+          logEvent("share_success", "native");
+        } catch {
+          logEvent("share_cancel", "native");
+        }
+      };
+    }
+  }
+
+  // Copy link
+  const copyBtn = document.getElementById("copyLinkBtn");
+  const note = document.getElementById("shareNote");
+  if (copyBtn) {
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        const tmp = document.createElement("input");
+        tmp.value = shareUrl;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+      }
+      if (note) note.textContent = "Link copied.";
+      logEvent("share_success", "copy_link");
+      setTimeout(() => { if (note) note.textContent = ""; }, 2000);
+    };
+  }
+}
 
     renderResults().catch(() => {});
   </script>
