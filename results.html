@@ -50,6 +50,15 @@
         .replaceAll("'","&#039;");
     }
 
+     // ---- Persistent user.id field ----- 
+        (function ensureUserId() {
+      let user_id = localStorage.getItem("dc_user_id");
+      if (!user_id) {
+        user_id = crypto.randomUUID();
+        localStorage.setItem("dc_user_id", user_id);
+      }
+    })();
+
     // ---- Event logger → Netlify ----
     async function logEvent(event_name, event_detail = "") {
       try {

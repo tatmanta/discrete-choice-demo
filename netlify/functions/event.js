@@ -49,6 +49,7 @@ exports.handler = async (event) => {
     page_url = "",
     referrer = "",
     user_agent = "",
+    user_id = "",
   } = body;
 
   if (!session_id || !event_name) {
@@ -75,6 +76,7 @@ exports.handler = async (event) => {
     page_url,
     referrer,
     user_agent,
+    user_id
   };
 
   // ✅ Use Bearer auth + sheet param

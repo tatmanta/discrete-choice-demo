@@ -121,6 +121,15 @@
       sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
     sessionStorage.setItem("dc_session_id", sessionId);
 
+    // ---- Persistent user.id field ----- 
+        (function ensureUserId() {
+      let user_id = localStorage.getItem("dc_user_id");
+      if (!user_id) {
+        user_id = crypto.randomUUID();
+        localStorage.setItem("dc_user_id", user_id);
+      }
+    })();
+
     // ---- Wiring events fields → Netlify function (SAFE) ----
     async function logEvent(event_name, event_value = "") {
       // Hard guard: never throw, never block UX
@@ -128,20 +137,21 @@
         // Required IDs (fail quietly if missing)
         if (!sessionId || !event_name) return;
 
-        const payload = {
-          app_version: APP_VERSION || "",
-          env: ENV || "",
-          session_id: sessionId,
-          client_run_id:
-            clientRunId ||
-            sessionStorage.getItem("dc_client_run_id") ||
-            "",
-          event_name,
-          event_value: String(event_value || ""),
-          page_url: window.location.href || "",
-          referrer: document.referrer || "",
-          user_agent: navigator.userAgent || ""
-        };
+    const payload = {
+      app_version: APP_VERSION || "",
+      env: ENV || "",
+      user_id: localStorage.getItem("dc_user_id") || "",   // ✅ add
+      session_id: sessionId,
+      client_run_id:
+        clientRunId ||
+        sessionStorage.getItem("dc_client_run_id") ||
+        "",
+      event_name,
+      event_detail: String(event_value || ""),             // ✅ rename to match your schema
+      page_url: window.location.href || "",
+      referrer: document.referrer || "",
+      user_agent: navigator.userAgent || ""
+    };
 
           sessionStorage.setItem("dc_app_version", APP_VERSION);
           sessionStorage.setItem("dc_env", ENV);
@@ -537,6 +547,7 @@
       const payload = {
         app_version: APP_VERSION,
         env: ENV,
+        user_id: localStorage.getItem("dc_user_id") || "", // ✅ ADD THIS
         session_id: sessionId,
         client_run_id: clientRunId,
         dedupe_key: dedupeKey,

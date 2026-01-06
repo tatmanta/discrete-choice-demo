@@ -49,7 +49,8 @@ exports.handler = async (event) => {
     language,
     user_agent,
     referrer,
-    page_url
+    page_url,
+    user_id,
   } = body;
 
   // Minimal validation
@@ -114,6 +115,7 @@ exports.handler = async (event) => {
     user_agent: user_agent || "",
     referrer: referrer || "",
     page_url: page_url || "",
+    user_id: user_id || "",
   };
 
   const writeUrl = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET)}`;
