@@ -133,6 +133,20 @@
       const aggregateN = await fetchAggregateN();
       const nLabel = Number.isFinite(aggregateN) ? aggregateN.toLocaleString() : "—";
 
+
+      // --- TEMP: dummy distribution (until backend provides real distribution) ---
+      const mockDistribution = [
+        { label: "The Trusted Soul", value: 22 },
+        { label: "The Peace Seeker", value: 18 },
+        { label: "The Comfort Guardian", value: 16 },
+        { label: "The Legacy Weaver", value: 21 },
+        { label: "The Order Keeper", value: 23 }
+      ];
+
+      const maxVal = Math.max(...mockDistribution.map(d => d.value));
+
+
+
       mount.innerHTML = `
         <div class="survey-card">
           <p class="kicker">Your end-of-life values profile</p>
@@ -143,6 +157,41 @@
           <p class="fineprint" style="margin-top:10px">
             Anonymous aggregate results · N = <span id="aggN">${nLabel}</span>
           </p>
+
+          ${distHtml}
+
+          <!-- Aggregate comparison (TEMP dummy data) -->
+          <div class="dist-card" aria-label="Aggregate results comparison">
+            <div class="dist-head">
+              <h3 class="dist-title">How others scored</h3>
+              <p class="dist-sub">
+                Anonymous, aggregate distribution across profiles.
+                <span class="dist-n">N = ${nLabel}</span>
+                <span class="dist-note">(distribution is mock for now)</span>
+              </p>
+            </div>
+
+            <div class="dist-chart" role="list" aria-label="Distribution by profile">
+              ${mockDistribution.map(d => {
+                const isYou = d.label === personaName;
+                const pct = (d.value / maxVal) * 100;
+                return `
+                  <div class="bar-row" role="listitem">
+                    <div class="bar-label">
+                      <span class="${isYou ? 'bar-you' : ''}">
+                        ${escapeHtml(d.label)}${isYou ? ' (you)' : ''}
+                      </span>
+                    </div>
+                    <div class="bar-track" aria-label="${escapeHtml(d.label)} ${d.value}%">
+                      <div class="bar-fill ${isYou ? 'is-you' : ''}" style="width:${pct}%"></div>
+                    </div>
+                    <div class="bar-val">${d.value}%</div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+
 
           <div class="share-card" aria-label="Share results">
             <div class="share-head">
