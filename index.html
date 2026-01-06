@@ -65,6 +65,30 @@
   </div>
 
   <script>
+
+    // --- Always start at top on load (including Safari/Chrome bfcache restores) ---
+      (function forceTopOnLoad(){
+        // stop browser scroll restoration
+        if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+        const goTop = () => {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        };
+
+        // initial paint
+        window.addEventListener("DOMContentLoaded", goTop, { once: true });
+
+        // after all assets (fonts/images) settle
+        window.addEventListener("load", goTop, { once: true });
+
+        // when navigating back to this page from results (bfcache)
+        window.addEventListener("pageshow", (e) => {
+          if (e.persisted) goTop();
+        });
+      })();
+
     const blocks = [
       [ [ [0,1,1,1,1], [1,2,0,0,0] ], [ [2,2,1,1,0], [1,0,0,0,1] ], [ [2,0,1,0,1], [0,1,0,1,0] ], [ [1,0,1,1,0], [0,2,0,0,1] ], [ [2,1,1,0,1], [0,2,0,1,0] ], [ [1,1,0,1,0], [2,2,1,0,1] ], [ [2,1,0,0,0], [0,0,1,1,1] ], [ [1,2,1,0,0], [0,1,0,1,1] ] ],
       [ [ [2,0,0,1,1], [0,2,1,0,0] ], [ [0,2,1,1,1], [2,0,1,1,1] ], [ [2,0,1,0,0], [1,1,0,1,1] ], [ [2,1,0,1,0], [1,0,1,0,1] ], [ [2,1,1,0,1], [1,2,0,1,0] ], [ [0,0,1,0,1], [1,2,0,1,0] ], [ [1,1,1,1,0], [0,2,0,0,1] ], [ [1,2,1,1,1], [2,1,0,0,0] ] ],
@@ -321,7 +345,7 @@
       }
 
       startBtn.onclick = startSurvey;
-      startBtn.focus();
+      startBtn.focus({ preventScroll: true });
 
       // ✅ Space / Enter starts survey on intro (anywhere, unless typing/clicking controls)
       introKeyHandler = (e) => {
