@@ -9,10 +9,24 @@
   --border2: rgba(17, 19, 24, 0.08);
   --card: #ffffff;
   --shadow: 0 18px 50px rgba(17, 19, 24, 0.08);
-  --accent: #111318;
-  --accentSoft: rgba(17, 19, 24, 0.06);
-  --highlight: rgba(17, 19, 24, 0.06);
+
+  /* ✅ UCLA accent system */
+  --uclaBlue: #2774AE;                 /* UCLA Blue */
+  --accent: var(--uclaBlue);           /* primary accent used across UI */
+  --accentText: #ffffff;
+  --accentHover: #1F5F8E;              /* slightly darker for hover */
+  --accentSoft: rgba(39, 116, 174, 0.10); /* light tint for surfaces */
+  --accentSoft2: rgba(39, 116, 174, 0.06);
+  --highlight: rgba(39, 116, 174, 0.12);  /* selected column tint (heavier) */
+  --hoverTint: rgba(39, 116, 174, 0.06);  /* hover tint (lighter) */
+  --ring: rgba(39, 116, 174, 0.28);       /* focus/outline */
+  --ringStrong: rgba(39, 116, 174, 0.45);
+
   --proto: #fff2a8;
+
+  /* table polish tokens */
+  --tableHead: rgba(17,19,24,0.035);
+  --zebra: rgba(17,19,24,0.015);
 }
 
 *{ box-sizing: border-box; }
@@ -62,7 +76,7 @@ a:hover{ text-decoration: underline; }
   letter-spacing: 0.06em;
   font-size: 16px;
   line-height: 1;
-  color: #000;            /* or: var(--text); */
+  color: #000;
   text-decoration: none;
 }
 .site-brand:hover{ text-decoration: none; }
@@ -154,16 +168,16 @@ a:hover{ text-decoration: underline; }
   transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
 }
 
-.btn:hover{ background: var(--accentSoft); }
+.btn:hover{ background: var(--accentSoft2); }
 .btn:active{ transform: translateY(1px); }
 .btn:disabled{ opacity: 0.55; cursor: not-allowed; }
 
 .btn-primary{
   background: var(--accent);
-  color: #fff;
+  color: var(--accentText);
   border-color: var(--accent);
 }
-.btn-primary:hover{ background: #0a0c10; }
+.btn-primary:hover{ background: var(--accentHover); }
 
 .btn-ghost{
   background: #fff;
@@ -198,14 +212,14 @@ a:hover{ text-decoration: underline; }
 }
 .progress-bar{
   height: 100%;
-  background: rgba(17,19,24,0.7);
+  background: var(--accent); /* ✅ UCLA blue */
   width: 0%;
 }
 
 /* Table container: allow horizontal scroll on mobile */
 .table-wrap{
   max-width: 100%;
-  overflow-x: auto;              /* enables sideways scroll */
+  overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   border-radius: 12px;
@@ -215,17 +229,6 @@ a:hover{ text-decoration: underline; }
   touch-action: pan-x pan-y;
   clip-path: inset(0 round 12px);
 }
-
-
-/* Table old
-.table-wrap{
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 12px;
-  max-width: 100%;
-  border: 1px solid var(--border2);
-} */
 
 table.scenarioTbl{
   width: 100%;
@@ -242,53 +245,106 @@ table.scenarioTbl td{
   border-bottom: 1px solid var(--border2);
   border-right: 1px solid var(--border2);
   line-height: 1.45;
-  font-size: 0.98rem;
+  font-size: 0.96rem;
 }
 
 table.scenarioTbl thead th{
-  background: rgba(17,19,24,0.03);
+  background: var(--tableHead);
   font-weight: 700;
   color: var(--text);
+
+  /* sticky header */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  backdrop-filter: blur(6px);
 }
 
-table.scenarioTbl tr > *:first-child{
-  border-left: none;
-}
-table.scenarioTbl tr > *:last-child{
-  border-right: none;
-}
-table.scenarioTbl tr:last-child > *{
-  border-bottom: none;
-}
+/* Subtle zebra striping for scan-ability */
+table.scenarioTbl tbody tr:nth-child(odd) td{ background: #fff; }
+table.scenarioTbl tbody tr:nth-child(even) td{ background: var(--zebra); }
+
+table.scenarioTbl tr > *:first-child{ border-left: none; }
+table.scenarioTbl tr > *:last-child{ border-right: none; }
+table.scenarioTbl tr:last-child > *{ border-bottom: none; }
 
 .rowhead{
   font-weight: 600;
-  color: var(--text);
+  color: rgba(17,19,24,0.82);
   background: rgba(17,19,24,0.015);
 }
 
 .centered{ text-align:center; }
 
-/* Column selection + hover affordance */
-.selectedScenarioCol{
-  background: var(--highlight) !important;
-  font-weight: 600;
-}
-
-.scCell, .scHead{
-  cursor: pointer;
-}
+.scCell, .scHead{ cursor: pointer; }
 .scHead .scHeadRadio{ cursor: pointer; }
 
+/* ✅ Hover column: lighter UCLA tint */
 .hoverScenarioCol{
-  background: rgba(17,19,24,0.04) !important;
+  background: var(--hoverTint) !important;
 }
-
 .scenarioTbl .hoverScenarioCol{
-  box-shadow: inset 0 0 0 1px rgba(17,19,24,0.14);
+  box-shadow: inset 0 0 0 1px rgba(39,116,174,0.18);
 }
 
-/* Radios as subtle pills */
+/* ✅ Selected column: heavier UCLA tint + clearer boundary */
+.selectedScenarioCol{
+  background: var(--highlight) !important;
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+/* ✅ Selected header cell: UCLA blue background + white text */
+table.scenarioTbl thead th.selectedScenarioCol{
+  background: rgba(39,116,174,0.12) !important; /* subtle tint instead of full blue */
+  color: var(--text) !important;
+}
+table.scenarioTbl thead th.selectedScenarioCol .scHeadRadio span{
+  color: var(--text) !important;
+}
+
+
+/* Make hover on header subtle (do NOT turn full blue) */
+table.scenarioTbl thead th.hoverScenarioCol{
+  background: rgba(39,116,174,0.12) !important;
+}
+
+/* Header radios (Scenario 1 / 2) */
+.scHeadRadio{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.scHeadRadio input{
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent); /* ✅ UCLA blue */
+  transform: translateY(1px);
+}
+.scHeadRadio span{
+  font-weight: 700;
+}
+
+/* Keyboard focus ring (keep on survey, remove on results via .results-page rules) */
+.scenarioTbl [data-scn]:focus-visible{
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--ringStrong);
+}
+
+/* Don’t add extra ring to the radio itself */
+.scHeadRadio input:focus-visible{
+  outline: none;
+  box-shadow: none;
+}
+
+/* Optional: show focus state on header when radio focused */
+.scHead:focus-within{
+  box-shadow: inset 0 0 0 2px var(--ringStrong);
+}
+
+/* Radios as subtle pills (if you use this class anywhere) */
 .radioPill{
   display:inline-flex;
   align-items:center;
@@ -300,15 +356,13 @@ table.scenarioTbl tr:last-child > *{
   cursor: pointer;
   user-select: none;
 }
-
 .radioPill input{
   width: 16px;
   height: 16px;
-  accent-color: var(--text);
+  accent-color: var(--accent);
 }
-
 .radioPill:hover{
-  background: var(--accentSoft);
+  background: var(--accentSoft2);
 }
 
 /* Results */
@@ -318,6 +372,13 @@ table.scenarioTbl tr:last-child > *{
   letter-spacing: 0.08em;
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+/* Results page: remove focus outlines */
+.results-page *:focus,
+.results-page *:focus-visible{
+  outline: none;
+  box-shadow: none;
 }
 
 .result-title{
@@ -343,6 +404,15 @@ table.scenarioTbl tr:last-child > *{
   justify-content: center;
 }
 
+/* Results hero image */
+.results-page .result-hero{
+  width: 50%;
+  max-width: 280px; /* safety cap so it never gets huge */
+  height: auto;
+  display: block;
+  margin: 10px auto 14px;
+}
+
 /* Footer */
 .site-footer{
   border-top: 1px solid var(--border2);
@@ -355,6 +425,57 @@ table.scenarioTbl tr:last-child > *{
   text-align:center;
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+/* Intro hero image (intro page only) */
+.intro-hero{
+  margin: 0 0 16px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  background: rgba(17, 19, 24, 0.02);
+}
+
+.intro-hero img{
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.intro-hero{
+  aspect-ratio: 16 / 9;
+}
+
+.intro-hero img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== Footer: research affiliations ===== */
+.footer-meta{
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.footer-logos{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.footer-logos img{
+  max-width: 80px;
+  width: auto;
+  opacity: 0.85;
+  filter: grayscale(100%);
+}
+
+@media (max-width: 720px){
+  .footer-logos img{ max-width: 60px; }
 }
 
 /* Responsive */
@@ -379,116 +500,7 @@ table.scenarioTbl tr:last-child > *{
   }
 }
 
-/* ===== Modern table polish ===== */
-:root{
-  --ring: rgba(17,19,24,0.22);
-  --ringStrong: rgba(17,19,24,0.38);
-  --tableHead: rgba(17,19,24,0.035);
-  --zebra: rgba(17,19,24,0.015);
-}
-
-/* Give the table container a "card within card" feel - old
-.table-wrap{
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(17,19,24,0.06);
-  overflow: hidden;
-*/
-
-/* Sticky header (helps feel like a modern app) */
-table.scenarioTbl thead th{
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--tableHead);
-  backdrop-filter: blur(6px);
-}
-
-/* Subtle zebra striping for scan-ability */
-table.scenarioTbl tbody tr:nth-child(odd) td{
-  background: #fff;
-}
-table.scenarioTbl tbody tr:nth-child(even) td{
-  background: var(--zebra);
-}
-
-/* Header radios (Scenario 1 / 2) */
-.scHeadRadio{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.scHeadRadio input{
-  width: 16px;
-  height: 16px;
-  accent-color: var(--text);
-  transform: translateY(1px);
-}
-
-.scHeadRadio span{
-  font-weight: 700; /* matches your thead th weight */
-}
-
-/* Make clickable cells feel like interactive surfaces */
-.scCell, .scChoice, .scHead{
-  transition: background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
-}
-
-/* Better hover */
-.hoverScenarioCol{
-  background: rgba(17,19,24,0.045) !important;
-}
-
-/* Selected column: clearer but still subtle */
-.selectedScenarioCol{
-  background: rgba(17,19,24,0.06) !important;
-  box-shadow: inset 0 0 0 1px var(--ring);
-}
-
-/* Stronger affordance on the header when selected/hovered */
-.scHead.selectedScenarioCol,
-.scHead.hoverScenarioCol{
-  box-shadow: inset 0 -2px 0 var(--ringStrong);
-}
-
-/* Ensure hover/selected classes visually win on header cells too */
-table.scenarioTbl thead th.hoverScenarioCol,
-table.scenarioTbl thead th.selectedScenarioCol{
-  background: rgba(17,19,24,0.045) !important;
-}
-
-/* Keyboard focus ring (critical for “app-like” feel + accessibility) */
-.scenarioTbl [data-scn]:focus-visible{
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--ringStrong);
-}
-
-/* Focus ring for the header radios removed */
-.scHeadRadio input:focus-visible{
-  outline: none;
-  box-shadow: none;
-}
-
-.scHead:focus-within{
-  box-shadow: inset 0 0 0 2px var(--ringStrong);
-}
-
-
-/* Slightly tighter typography for a cleaner grid */
-table.scenarioTbl th,
-table.scenarioTbl td{
-  font-size: 0.96rem;
-}
-
-/* Make row headers more “label-like” */
-.rowhead{
-  color: rgba(17,19,24,0.82);
-}
 /* ===== Results: distribution + share ===== */
-
 .dist-card, .share-card{
   margin-top: 18px;
   padding: 18px 18px;
@@ -497,9 +509,7 @@ table.scenarioTbl td{
   background: #fff;
 }
 
-.dist-head, .share-head{
-  margin-bottom: 12px;
-}
+.dist-head, .share-head{ margin-bottom: 12px; }
 
 .dist-title, .share-title{
   margin: 0 0 6px 0;
@@ -531,7 +541,6 @@ table.scenarioTbl td{
   font-size: 0.9em;
 }
 
-
 .bar-row{
   display: grid;
   grid-template-columns: minmax(170px, 1fr) 3fr auto;
@@ -544,9 +553,7 @@ table.scenarioTbl td{
   color: rgba(17,19,24,0.9);
 }
 
-.bar-you{
-  font-weight: 700;
-}
+.bar-you{ font-weight: 700; }
 
 .bar-track{
   height: 12px;
@@ -595,7 +602,7 @@ table.scenarioTbl td{
   transition: background 120ms ease, transform 120ms ease;
 }
 
-.icon-btn:hover{ background: var(--accentSoft); }
+.icon-btn:hover{ background: var(--accentSoft2); }
 .icon-btn:active{ transform: translateY(1px); }
 
 .icon{
@@ -620,7 +627,5 @@ table.scenarioTbl td{
     grid-template-columns: 1fr;
     gap: 6px;
   }
-  .bar-val{
-    justify-self: start;
-  }
+  .bar-val{ justify-self: start; }
 }

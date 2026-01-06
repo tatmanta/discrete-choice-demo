@@ -15,10 +15,6 @@
 </head>
 
 <body>
-  <div class="proto-banner" role="status" aria-live="polite">
-    Prototype preview — visual & UX changes only (no data saved)
-  </div>
-
   <header class="site-header">
     <div class="site-header-inner">
       <a class="site-brand" href="./index.html" aria-label="Home">DISCRETE CHOICE SURVEY</a>
@@ -36,7 +32,26 @@
 
   <footer class="site-footer">
     <div class="site-footer-inner">
-      <div>© 2025 · Research tool · Not medical or legal advice</div>
+      <div class="footer-meta">
+        © 2025 · Research tool · Not medical or legal advice
+      </div>
+
+      <div class="footer-meta">
+        Designed by researchers at UCLA Anderson and Università Bocconi
+      </div>
+
+      <div class="footer-logos" aria-label="Research affiliations">
+        <img
+          src="./assets/ucla logo.png"
+          alt="UCLA Anderson School of Management"
+          loading="lazy"
+        />
+        <img
+          src="./assets/Bocconi logo.png"
+          alt="Università Bocconi"
+          loading="lazy"
+        />
+      </div>
     </div>
   </footer>
 
@@ -117,12 +132,14 @@
     const ENV = "prod"; // or "staging"
 
     // ---- Session + run identifiers ----
-    const sessionId =
-      sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
+    const sessionId = sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
     sessionStorage.setItem("dc_session_id", sessionId);
 
-    // ---- Persistent user.id field ----- 
-        (function ensureUserId() {
+    // One per survey attempt (reset on Start)
+    let clientRunId = null;
+
+    // ---- Persistent user.id field ----
+    (function ensureUserId() {
       let user_id = localStorage.getItem("dc_user_id");
       if (!user_id) {
         user_id = crypto.randomUUID();
@@ -132,47 +149,34 @@
 
     // ---- Wiring events fields → Netlify function (SAFE) ----
     async function logEvent(event_name, event_value = "") {
-      // Hard guard: never throw, never block UX
       try {
-        // Required IDs (fail quietly if missing)
         if (!sessionId || !event_name) return;
 
-    const payload = {
-      app_version: APP_VERSION || "",
-      env: ENV || "",
-      user_id: localStorage.getItem("dc_user_id") || "",   // ✅ add
-      session_id: sessionId,
-      client_run_id:
-        clientRunId ||
-        sessionStorage.getItem("dc_client_run_id") ||
-        "",
-      event_name,
-      event_detail: String(event_value || ""),             // ✅ rename to match your schema
-      page_url: window.location.href || "",
-      referrer: document.referrer || "",
-      user_agent: navigator.userAgent || ""
-    };
+        const payload = {
+          app_version: APP_VERSION || "",
+          env: ENV || "",
+          user_id: localStorage.getItem("dc_user_id") || "",
+          session_id: sessionId,
+          client_run_id: clientRunId || sessionStorage.getItem("dc_client_run_id") || "",
+          event_name,
+          event_detail: String(event_value || ""),
+          page_url: window.location.href || "",
+          referrer: document.referrer || "",
+          user_agent: navigator.userAgent || ""
+        };
 
-          sessionStorage.setItem("dc_app_version", APP_VERSION);
-          sessionStorage.setItem("dc_env", ENV);
+        sessionStorage.setItem("dc_app_version", APP_VERSION);
+        sessionStorage.setItem("dc_env", ENV);
 
-        // Fire-and-forget (do not await response body)
         fetch("/.netlify/functions/event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
-        }).catch(() => {
-          /* swallow network errors */
-        });
-
+        }).catch(() => {});
       } catch (e) {
-        // Never surface to user
         console.warn("event logger failed silently");
       }
     }
-
-    // One per survey attempt (reset on Start)
-    let clientRunId = null;
 
     // ---- Dedupe policy (client-side label; server enforces later) ----
     const DEDUPE_WINDOW_MINUTES = 60;
@@ -183,7 +187,6 @@
     }
 
     async function sha256Hex(input) {
-      // crypto.subtle requires secure context (https). Netlify/Railway ok; file:// not.
       const data = new TextEncoder().encode(String(input));
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
       return Array.from(new Uint8Array(hashBuffer))
@@ -202,8 +205,16 @@
       document.body.scrollTop = 0;
     }
 
-    // one handler reused across tasks, removed/re-added each render
+    // ---- Key handlers (attach/detach cleanly) ----
+    let introKeyHandler = null;
     let taskKeyHandler = null;
+
+    function clearIntroKeyHandler(){
+      if (introKeyHandler) {
+        document.removeEventListener('keydown', introKeyHandler);
+        introKeyHandler = null;
+      }
+    }
 
     function clearTaskKeyHandler(){
       if (taskKeyHandler) {
@@ -214,39 +225,57 @@
 
     function renderIntro(){
       clearTaskKeyHandler();
+      clearIntroKeyHandler();
       scrollToTopInstant();
 
-      document.getElementById('mainBlock').innerHTML = `
-        <div class="survey-card">
-          <div class="prose">
-            <p>
-              You will be asked to consider various scenarios related to end-of-life decisions. Each scenario is designed to
-              highlight the diverse considerations and choices that may arise as one approaches the end of life.
-            </p>
-            <p>
-              We recognize that the subject matter may be sensitive and challenging to contemplate, and we encourage you to
-              engage with each scenario to the best of your ability.
-            </p>
-            <p>
-              Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
-              and preferences as there are no right or wrong answers.
-            </p>
-            <p class="fineprint" style="margin-top:12px">
-              Responses may be stored anonymously for research. No names or emails are collected.
-            </p>
-          </div>
+    document.getElementById('mainBlock').innerHTML = `
+      <div class="survey-card">
 
-          <div class="cta-row">
-            <button type="button" class="btn btn-primary" id="startBtn">Start survey</button>
-          </div>
+        <figure class="intro-hero" aria-label="Survey introduction graphic">
+          <picture>
+            <source srcset="assets/choices graphic landscape.png" type="image/webp">
+            <img
+              src="assets/choices graphic landscape.png"
+              alt="Illustration representing end-of-life values and decision-making"
+              loading="eager"
+              decoding="async"
+              width="1584"
+              height="396"
+            />
+          </picture>
+        </figure>
 
-          <p class="fineprint">
-            <em>Takes less than 5 minutes.</em>
+        <div class="prose">
+          <p>
+            You will be asked to consider various scenarios related to end-of-life decisions. Each scenario is designed to
+            highlight the diverse considerations and choices that may arise as one approaches the end of life.
+          </p>
+          <p>
+            We recognize that the subject matter may be sensitive and challenging to contemplate, and we encourage you to
+            engage with each scenario to the best of your ability.
+          </p>
+          <p>
+            Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
+            and preferences as there are no right or wrong answers.
+          </p>
+          <p class="fineprint" style="margin-top:12px">
+            Responses may be stored anonymously for research. No names or emails are collected.
           </p>
         </div>
-      `;
 
-      document.getElementById('startBtn').onclick = function() {
+        <div class="cta-row">
+          <button type="button" class="btn btn-primary" id="startBtn">Start survey</button>
+        </div>
+
+        <p class="fineprint">
+          <em>Takes less than 5 minutes.</em>
+        </p>
+      </div>
+    `;
+
+      const startBtn = document.getElementById('startBtn');
+
+      function startSurvey() {
         // ---- IDs for dedupe + session tracking ----
         clientRunId = crypto.randomUUID();
         sessionStorage.setItem("dc_client_run_id", clientRunId);
@@ -265,11 +294,30 @@
         logEvent("survey_start", `blockIndex=${blockIndex}`);
 
         showTask(0);
+      }
+
+      startBtn.onclick = startSurvey;
+      startBtn.focus();
+
+      // ✅ Space / Enter starts survey on intro (anywhere, unless typing/clicking controls)
+      introKeyHandler = (e) => {
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+        if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
+
+        if (isSpace || isEnter) {
+          e.preventDefault(); // prevent scroll on Space
+          startSurvey();
+        }
       };
+      document.addEventListener('keydown', introKeyHandler);
     }
 
     function showTask(idx) {
       clearTaskKeyHandler();
+      clearIntroKeyHandler();
       scrollToTopInstant();
 
       currentTask = idx;
@@ -351,8 +399,6 @@
               : `<button type="button" class="btn btn-primary" id="submitBtn">Submit</button>`
             }
           </div>
-
-          <p class="fineprint">Prototype preview — responses may be stored anonymously for research.</p>
         </div>
       `;
 
@@ -372,7 +418,6 @@
       }
 
       function focusCol(scn, on){
-        // reuse your hover class to paint the whole column (header + cells)
         setHover(scn, on);
       }
 
@@ -394,14 +439,11 @@
         }
       }
 
-      // Initial highlight (when returning to a question)
       const initial = selectedScenario();
       if (initial) updateColHighlight(initial);
 
-      // Clicking anywhere in a column selects it (header or cells)
       table.querySelectorAll('[data-scn="1"]').forEach(el => {
         el.addEventListener('click', (e) => {
-          // if you click directly on the radio, let the native event handle it
           if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return;
           selectScenario(1);
         });
@@ -418,31 +460,23 @@
         el.addEventListener('mouseleave', () => setHover(2, false));
       });
 
-      // Radios also drive highlight
       rb1.addEventListener('change', () => selectScenario(1));
       rb2.addEventListener('change', () => selectScenario(2));
 
-      // Keyboard focus should highlight the whole column (including header)
       rb1.addEventListener('focus', () => focusCol(1, true));
       rb1.addEventListener('blur',  () => focusCol(1, false));
-
       rb2.addEventListener('focus', () => focusCol(2, true));
       rb2.addEventListener('blur',  () => focusCol(2, false));
 
-      // Keyboard: restore arrows + space behavior (like before)
       taskKeyHandler = (e) => {
         const wrapNow = document.querySelector('.table-wrap');
         if (!wrapNow) return;
 
-        // Only when focus is inside the table region
         if (!wrapNow.contains(document.activeElement)) return;
 
         const activeEl = document.activeElement;
-
-        // Let keyboard control even when focus is on the radios
         const isRadioFocus = (activeEl === rb1 || activeEl === rb2);
 
-        // Don't hijack other native controls
         const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
         if (!isRadioFocus && (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a")) return;
 
@@ -467,9 +501,11 @@
           return;
         }
 
-        // Space/Enter should select the focused scenario AND advance
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault(); // prevents page scroll on Space
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
+
+        if (isSpace || isEnter) {
+          e.preventDefault();
           const n = focusedScenario();
           selectScenario(n, { focusNext: true });
           return;
@@ -483,11 +519,9 @@
           return;
         }
       };
+
       document.addEventListener("keydown", taskKeyHandler);
 
-      document.addEventListener('keydown', taskKeyHandler);
-
-      // Set a sane initial focus
       if (rb1 && rb2) (rb1.checked ? rb1 : rb2.checked ? rb2 : rb1).focus();
 
       requestAnimationFrame(() => scrollToTopInstant());
@@ -538,7 +572,6 @@
       }
       answers[currentTask] = choice.value;
 
-      // Persona calculation
       let attrScores = Array(attributes.length).fill(0);
       assignedBlock.forEach((task, t) => {
         const [option1, option2] = task;
@@ -552,20 +585,16 @@
       const maxScore = Math.max(...attrScores);
       const importantAttrIndex = attrScores.findIndex(s => s === maxScore);
 
-      // store for results page
       sessionStorage.setItem("dc_results_personaIndex", String(importantAttrIndex));
       sessionStorage.setItem("dc_results_personaName", personaInfo[importantAttrIndex].name);
       sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
       sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
 
-      // ✅ C) Event log for submit (fire-and-forget)
       logEvent(
         "survey_submit",
         `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`
       );
 
-      // ---- Build dedupe key + payload for logging ----
-      // If clientRunId is somehow missing (deep link), create it now.
       if (!clientRunId) {
         clientRunId = sessionStorage.getItem("dc_client_run_id") || crypto.randomUUID();
         sessionStorage.setItem("dc_client_run_id", clientRunId);
@@ -576,17 +605,15 @@
 
       let dedupeKey = "";
       try {
-        // stable fingerprint: app version + block + answers
         dedupeKey = await sha256Hex([APP_VERSION, blockIndex, answersJson].join("|"));
       } catch (e) {
-        // fallback if crypto.subtle unavailable (shouldn't happen on https)
         dedupeKey = [APP_VERSION, blockIndex, clientRunId].join("|");
       }
 
       const payload = {
         app_version: APP_VERSION,
         env: ENV,
-        user_id: localStorage.getItem("dc_user_id") || "", // ✅ ADD THIS
+        user_id: localStorage.getItem("dc_user_id") || "",
         session_id: sessionId,
         client_run_id: clientRunId,
         dedupe_key: dedupeKey,
@@ -605,7 +632,6 @@
         page_url: window.location.href
       };
 
-      // ---- Log (fail open) ----
       try {
         await fetch("/.netlify/functions/submit", {
           method: "POST",
@@ -616,7 +642,6 @@
         console.warn("Logging failed; continuing", e);
       }
 
-      // move to dedicated results page
       window.location.href = "./results.html";
     }
 
