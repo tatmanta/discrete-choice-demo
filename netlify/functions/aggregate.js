@@ -1,41 +1,73 @@
-export async function handler() {
+// netlify/functions/aggregate.js
+
+function jsonResponse(statusCode, data) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+    },
+    body: JSON.stringify(data),
+  };
+}
+
+exports.handler = async (event) => {
+  // Preflight
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(200, { ok: true });
+  }
+
+  if (event.httpMethod !== "GET") {
+    return jsonResponse(405, { ok: false, error: "Method not allowed" });
+  }
+
   const SHEETDB_URL = process.env.SHEETDB_URL;
   const TOKEN = process.env.SHEETDB_BEARER_TOKEN;
 
   if (!SHEETDB_URL || !TOKEN) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Missing SheetDB env vars" })
-    };
+    return jsonResponse(500, { ok: false, error: "Missing SheetDB env vars" });
   }
 
-  const SHEET_NAME = "Submissions";
+  // ✅ IMPORTANT: set this to the exact tab name in Google Sheets
+  // If your tab is called "Responses", use "Responses"
+  const SHEET_NAME = "Responses";
   const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   try {
     const resp = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${TOKEN}`
-      }
+      method: "GET",
+      headers: { Authorization: `Bearer ${TOKEN}` },
     });
 
-    const rows = await resp.json();
+    const text = await resp.text();
+    if (!resp.ok) {
+      return jsonResponse(502, {
+        ok: false,
+        error: "SheetDB read failed",
+        status: resp.status,
+        details: text.slice(0, 300),
+      });
+    }
 
-    // Count unique user_id values
+    let rows;
+    try {
+      rows = JSON.parse(text);
+    } catch {
+      return jsonResponse(502, { ok: false, error: "Invalid JSON from SheetDB" });
+    }
+
+    // Count unique user_id values (prod only)
     const uniqueUsers = new Set();
-    rows.forEach(r => {
-      if (r.user_id) uniqueUsers.add(r.user_id);
-    });
+    for (const r of rows) {
+      if (String(r.env || "") !== "prod") continue; // optional but recommended
+      const uid = String(r.user_id || "").trim();
+      if (uid) uniqueUsers.add(uid);
+    }
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ n: uniqueUsers.size })
-    };
+    return jsonResponse(200, { ok: true, n: uniqueUsers.size });
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Aggregation failed" })
-    };
+    return jsonResponse(500, { ok: false, error: "Aggregation failed", details: String(err) });
   }
-}
+};
