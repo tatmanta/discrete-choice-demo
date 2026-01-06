@@ -12,7 +12,7 @@ export async function handler() {
     };
   }
 
-  const SHEET_NAME = "Submissions";
+  const SHEET_NAME = "responses";
   const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   try {
