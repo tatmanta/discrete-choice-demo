@@ -32,8 +32,25 @@
 
   <footer class="site-footer">
     <div class="site-footer-inner">
-      <div>© 2025 · Research tool · Not medical or legal advice</div>
-    </div>
+      <div class="footer-meta">© 2025 · Research tool · Not medical or legal advice</div>
+
+<div class="footer-meta">
+        Designed by researchers at UCLA Anderson and Università Bocconi
+      </div>
+
+      <div class="footer-logos" aria-label="Research affiliations">
+        <img
+          src="./assets/ucla logo.png"
+          alt="UCLA Anderson School of Management"
+          loading="lazy"
+        />
+        <img
+          src="./assets/Bocconi logo.png"
+          alt="Università Bocconi"
+          loading="lazy"
+        />
+      </div></div>
+
   </footer>
 
   <script>
@@ -317,7 +334,7 @@
 
       // done
     }
-    
+
     renderResults().catch(err => console.error(err));
 
   </script>
