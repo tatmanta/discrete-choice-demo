@@ -266,10 +266,14 @@
           </div>
 
           <div class="btn-row result-actions">
+            <button class="btn btn-primary" id="openScienceModal" type="button">
+            See the science →</button>
             <button class="btn btn-ghost" id="restartBtn">Take again</button>
           </div>
         </div>
       `;
+
+       wireScienceModal();
 
       // Focus
       const titleEl = document.getElementById("resultTitle");
@@ -337,6 +341,97 @@
 
     renderResults().catch(err => console.error(err));
 
+    // ---- Learn the science popup window
+    function wireScienceModal() {
+      const openBtn = document.getElementById("openScienceModal");
+      const closeBtn = document.getElementById("closeScienceModal");
+      const modal = document.getElementById("scienceModal");
+
+      if (!openBtn || !closeBtn || !modal) {
+        console.warn("Science modal wiring missing", { openBtn, closeBtn, modal });
+        return;
+      }
+
+      function openModal() {
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        closeBtn.focus();
+      }
+
+      function closeModal() {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        openBtn.focus();
+      }
+
+      // prevent double-binding if renderResults runs again
+      if (!openBtn.dataset.bound) {
+        openBtn.addEventListener("click", openModal);
+        openBtn.dataset.bound = "1";
+      }
+      if (!closeBtn.dataset.bound) {
+        closeBtn.addEventListener("click", closeModal);
+        closeBtn.dataset.bound = "1";
+      }
+
+      if (!modal.dataset.bound) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+        });
+
+        modal.dataset.bound = "1";
+      }
+    }
+
   </script>
+
+  <div class="modal-overlay" id="scienceModal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="scienceTitle">
+    <button class="modal-close" id="closeScienceModal" aria-label="Close">×</button>
+
+    <p class="kicker">The science</p>
+    <h2 class="modal-title" id="scienceTitle">How this survey generates your profile</h2>
+
+    <div class="science-diagram" aria-hidden="true">
+      <span>Scenarios</span><span>→</span><span>Choices</span><span>→</span><span>Value weights</span><span>→</span><span>Profile</span>
+    </div>
+
+    <p class="modal-lede">
+      This study uses a discrete-choice method: instead of rating each value in isolation, you make trade-offs across realistic scenarios.
+      Consistent patterns across your choices are used to infer what you prioritize most.
+    </p>
+
+    <details>
+      <summary>Method</summary>
+      <p>
+        You answered multiple scenario comparisons. Each choice provides information about the relative importance of the values shown.
+        Aggregating across decisions reduces noise from any single response.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why not simple ratings?</summary>
+      <p>
+        Ratings tend to inflate everything (“all of it matters”). Choice-based trade-offs force prioritization and are widely used in
+        health, economics, and policy research to model preferences.
+      </p>
+    </details>
+
+    <details>
+      <summary>Limits & interpretation</summary>
+      <p>
+        This result is not diagnostic or deterministic. It reflects preferences under the specific scenarios presented and is intended
+        to support reflection and conversation.
+      </p>
+    </details>
+  </div>
+</div>
+
 </body>
 </html>

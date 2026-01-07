@@ -684,3 +684,80 @@ table.scenarioTbl thead th.hoverScenarioCol{
   }
   .bar-val{ justify-self: start; }
 }
+
+/* Modal overlay + card */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 19, 24, 0.42);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-overlay.open{ display: flex; }
+
+.modal-card{
+  background: var(--card);
+  width: min(680px, calc(100% - 32px));
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 24px 24px 20px;
+  position: relative;
+}
+
+.modal-title{
+  margin: 6px 0 10px;
+}
+
+.modal-lede{
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.modal-close{
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border2);
+  background: var(--card);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.science-diagram{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-weight: 600;
+  background: rgba(17, 19, 24, 0.04);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 10px 0 14px;
+}
+
+/* Progressive disclosure */
+.modal-card details{
+  margin-top: 10px;
+  border-top: 1px solid var(--border2);
+  padding-top: 10px;
+}
+.modal-card summary{
+  cursor: pointer;
+  font-weight: 600;
+}
+.modal-card details p{
+  color: var(--muted);
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
