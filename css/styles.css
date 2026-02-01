@@ -279,34 +279,7 @@ table.scenarioTbl tr:last-child > *{ border-bottom: none; }
 .scCell, .scHead{ cursor: pointer; }
 .scHead .scHeadRadio{ cursor: pointer; }
 
-/* ✅ Hover column: lighter UCLA tint */
-.hoverScenarioCol{
-  background: var(--hoverTint) !important;
-}
-.scenarioTbl .hoverScenarioCol{
-  box-shadow: inset 0 0 0 1px rgba(39,116,174,0.18);
-}
 
-/* ✅ Selected column: heavier UCLA tint + clearer boundary */
-.selectedScenarioCol{
-  background: var(--highlight) !important;
-  box-shadow: inset 0 0 0 1px var(--ring);
-}
-
-/* ✅ Selected header cell: UCLA blue background + white text */
-table.scenarioTbl thead th.selectedScenarioCol{
-  background: rgba(39,116,174,0.12) !important; /* subtle tint instead of full blue */
-  color: var(--text) !important;
-}
-table.scenarioTbl thead th.selectedScenarioCol .scHeadRadio span{
-  color: var(--text) !important;
-}
-
-
-/* Make hover on header subtle (do NOT turn full blue) */
-table.scenarioTbl thead th.hoverScenarioCol{
-  background: rgba(39,116,174,0.12) !important;
-}
 
 /* Header radios (Scenario 1 / 2) */
 .scHeadRadio{
@@ -339,11 +312,6 @@ table.scenarioTbl thead th.hoverScenarioCol{
   box-shadow: none;
 }
 
-/* Optional: show focus state on header when radio focused */
-.scHead:focus-within{
-  box-shadow: inset 0 0 0 2px var(--ringStrong);
-}
-
 /* Radios as subtle pills (if you use this class anywhere) */
 .radioPill{
   display:inline-flex;
@@ -363,6 +331,234 @@ table.scenarioTbl thead th.hoverScenarioCol{
 }
 .radioPill:hover{
   background: var(--accentSoft2);
+}
+
+/* =========================================
+   Scenario grid → Card-style (like mock)
+   Paste AFTER your existing table styles
+========================================= */
+
+.table-wrap{
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  clip-path: none;
+}
+
+/* Let the “cards” breathe */
+table.scenarioTbl{
+  min-width: 720px;              /* keep your mobile horizontal scroll behavior */
+  border-collapse: separate;
+  border-spacing: 14px 14px;     /* reduced spacing */
+  background: transparent;
+}
+
+/* Header row: make it feel like a control bar */
+table.scenarioTbl thead th{
+  position: sticky;
+  top: 0;
+  z-index: 3;
+
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 0 8px 0;
+}
+
+/* Make the header labels feel like selectable pills */
+.scHeadRadio{
+  width: 100%;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(17,19,24,0.02);
+  transition: background 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+.scHeadRadio:hover{
+  background: rgba(17,19,24,0.04);
+}
+
+/* Body: remove “grid” lines */
+table.scenarioTbl td{
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0;                  /* the card will own padding */
+}
+
+/* Keep TDs as table-cells (do NOT set display:block on td) */
+.scCell{
+  padding: 0 !important;           /* td has no padding; the card owns it */
+  background: transparent !important;
+  border: 0 !important;
+  vertical-align: top;
+}
+
+/* === IMPORTANT: remove the light “rectangle select” on the TD itself === */
+table.scenarioTbl td.selectedScenarioCol,
+table.scenarioTbl td.hoverScenarioCol{
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* The visible card */
+.scCard{
+  background: #fff;
+  border: 2px solid rgba(17,19,24,0.18);
+  border-radius: 22px;
+
+  padding: 18px 18px;
+  line-height: 1.45;
+  font-size: 1rem;
+
+  box-shadow: 0 10px 22px rgba(17,19,24,0.08);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease,
+    opacity 140ms ease,
+    filter 140ms ease;
+}
+
+/* Hover lift (on card) */
+.scCell:hover .scCard{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(17,19,24,0.10);
+}
+
+/* Optional: also reflect hover state when JS adds .hoverScenarioCol */
+td.hoverScenarioCol .scCard{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(17,19,24,0.10);
+}
+
+/* Selected column: subtle, no heavy rectangle */
+td.selectedScenarioCol .scCard{
+  border-color: rgba(39,116,174,0.55); /* UCLA blue tint */
+  box-shadow:
+    0 14px 28px rgba(17,19,24,0.10),
+    0 0 0 2px rgba(39,116,174,0.22);   /* soft ring */
+  transform: translateY(-1px);
+}
+
+/* Dim the unselected column when a selection exists */
+table.scenarioTbl.hasSelection[data-selected="1"] [data-scn="2"] .scCard,
+table.scenarioTbl.hasSelection[data-selected="2"] [data-scn="1"] .scCard{
+  opacity: 0.55;
+  filter: saturate(0.85);
+  box-shadow: 0 8px 16px rgba(17,19,24,0.06);
+  transform: none;
+}
+
+/* Hover BEFORE a selection exists (normal exploration) */
+table.scenarioTbl:not(.hasSelection) .scCell:hover .scCard{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(17,19,24,0.10);
+}
+
+/* Hover AFTER a selection exists (very subtle reconsider affordance) */
+table.scenarioTbl.hasSelection .scCell:not(.selectedScenarioCol):hover .scCard{
+  opacity: 0.7;                         /* from ~0.55 */
+  border-color: rgba(17,19,24,0.35);    /* neutral hint, not blue */
+  box-shadow: none;
+  transform: none;
+}
+
+/* And explicitly suppress hover on the selected column */
+table.scenarioTbl.hasSelection .selectedScenarioCol:hover .scCard{
+  box-shadow: inherit;
+  transform: inherit;
+}
+
+/* Middle OR column */
+.orHead{
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* The OR cell becomes the positioning anchor */
+.orCell{
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  vertical-align: middle;
+  text-align: center;
+
+  position: relative; /* anchor for absolute centering */
+  min-width: 44px;
+}
+
+/* Ensure no TD-level outlines ever show on OR */
+table.scenarioTbl td.orCell{
+  box-shadow: none !important;
+}
+
+/* Badge is centered in the OR column for each row */
+.orBadge{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: rgba(17,19,24,0.42);
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(17,19,24,0.10);
+  box-shadow: 0 6px 14px rgba(17,19,24,0.06);
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Also “activate” the chosen header pill */
+table.scenarioTbl.hasSelection[data-selected="1"] th[data-scn="1"] .scHeadRadio,
+table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
+  background: #fff;
+  border-color: rgba(17,19,24,0.65);
+  box-shadow: 0 0 0 2px rgba(17,19,24,0.22);
+}
+
+/* Keep keyboard focus obvious (don’t create a TD rectangle) */
+.scenarioTbl [data-scn]:focus-visible{
+  outline: none;
+  box-shadow: none; /* prevents square focus box on td */
+}
+
+/* Put focus styling on the card instead */
+td:focus-visible .scCard,
+th:focus-within .scHeadRadio{
+  box-shadow: 0 0 0 3px var(--ringStrong);
+}
+
+/* Mobile: reduce OR badge + spacing slightly */
+@media (max-width: 720px){
+  table.scenarioTbl{
+    border-spacing: 12px 12px;
+  }
+  .orBadge{
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+}
+
+/* ===== Screen reader styles ===== */
+
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Results */
@@ -500,6 +696,68 @@ table.scenarioTbl thead th.hoverScenarioCol{
   }
 }
 
+/* Question 1 Landing Page Helper modal refinements */
+
+/* ===== Question 1 Helper Modal (Apple-style) ===== */
+
+/* Modal card is the positioning anchor */
+.help-card{
+  position: relative;
+  max-width: 560px;
+}
+
+/* Header */
+.help-head{
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+/* Title */
+.help-head .modal-title{
+  margin: 0;
+  text-align: center;
+}
+
+/* Close button — Apple-style, top-right */
+.help-card .modal-close{
+  position: absolute;
+  top: 14px;
+  right: 14px;
+
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 400;
+  color: rgba(17,19,24,0.45);
+  cursor: pointer;
+}
+
+/* Hover / active states (subtle, Apple-like) */
+.help-card .modal-close:hover{
+  background: rgba(17,19,24,0.04);
+  color: rgba(17,19,24,0.75);
+}
+
+.help-card .modal-close:active{
+  background: rgba(17,19,24,0.08);
+}
+
+/* Accessible focus ring */
+.help-card .modal-close:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+/* Body text spacing */
+.help-body p{
+  margin: 10px 0;
+}
+
 /* ===== Results loading overlay ===== */
 .loading-overlay{
   position: fixed;
@@ -553,7 +811,6 @@ table.scenarioTbl thead th.hoverScenarioCol{
 .loading-overlay.is-hidden{
   display: none;
 }
-
 
 /* ===== Results: distribution + share ===== */
 .dist-card, .share-card{
@@ -731,6 +988,34 @@ table.scenarioTbl thead th.hoverScenarioCol{
   line-height: 1;
 }
 
+/* Subtle Apple-style close button (helper modal) */
+.subtle-close{
+  border: none;
+  background: transparent;
+  color: rgba(17,19,24,0.45);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.subtle-close:hover{
+  background: rgba(17,19,24,0.04);
+  color: rgba(17,19,24,0.75);
+}
+
+.subtle-close:active{
+  background: rgba(17,19,24,0.08);
+}
+
+.subtle-close:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.help-card .modal-close{
+  top: 14px;
+  right: 14px;
+}
+
 .science-diagram{
   display: flex;
   flex-wrap: wrap;
@@ -760,4 +1045,3 @@ table.scenarioTbl thead th.hoverScenarioCol{
   margin: 8px 0 0;
   line-height: 1.5;
 }
-

@@ -64,6 +64,36 @@
     </div>
   </div>
 
+
+<!-- Helper overlay (Question 1 only) -->
+  <div id="q1HelpOverlay" class="loading-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="q1HelpTitle" aria-describedby="q1HelpBody">
+    <div class="loading-card help-card" role="document">
+      <div class="help-head">
+        <p class="loading-title" id="q1HelpTitle">How these questions work</p>
+        <button
+          type="button"
+          class="modal-close subtle-close"
+          id="q1HelpCloseX"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <div class="loading-sub help-body" id="q1HelpBody">
+        <p>Each screen shows two columns ("scenarios"), each describing a different set of end-of-life preferences.</p>
+        <p><b>Choose the scenario (1 or 2) that matters more to you.</b></p>
+        <p>If both feel equally important, choose the one you lean toward slightly.</p>
+        <p><b>There are no right or wrong answers.</b></p>
+        <p>Please read carefully — the options may involve trade-offs.</p>
+      </div>
+
+      <div class="cta-row" style="margin-top:14px">
+        <button type="button" class="btn btn-primary" id="q1HelpCloseBtn">Got it</button>
+      </div>
+    </div>
+  </div>
+
   <script>
 
     // --- Always start at top on load (including Safari/Chrome bfcache restores) ---
@@ -99,34 +129,34 @@
     const attributes = [
       { name: "Caregiver and Medical Trust",
         levels: [
-          "You have very little trust in your caregiver and medical team.",
-          "You have some trust in your caregiver and medical team.",
-          "You have a great deal of trust in your caregiver and medical team."
+          "You have very <b>little trust</b> in your caregiver and medical team.",
+          "You have <b>some trust</b> in your caregiver and medical team.",
+          "You have a <b>great deal of trust</b> in your caregiver and medical team."
         ]
       },
       { name: "Emotional Preparedness",
         levels: [
-          "You do not feel ready or at peace with dying, and are experiencing significant anxiety.",
-          "You feel somewhat ready and at peace with dying, and are experiencing some anxiety.",
-          "You feel ready and at peace with dying, completely free from anxiety."
+          "You <b>do not feel ready</b> or at peace with dying, and are experiencing significant anxiety.",
+          "You feel <b>somewhat ready</b> and at peace with dying, and are experiencing some anxiety.",
+          "You feel <b>ready and at peace</b> with dying, completely free from anxiety."
         ]
       },
       { name: "Comfort and Pain",
         levels: [
-          "You feel very uncomfortable and are experiencing pain.",
-          "You feel very comfortable and completely free from pain."
+          "You feel very <b>uncomfortable</b> and are experiencing pain.",
+          "You feel very <b>comfortable</b> and completely free from pain."
         ]
       },
       { name: "Closure and Family",
         levels: [
-          "Your friends and family are present, but you do not feel that your relationships and life are complete.",
-          "Your friends and family are present, and you feel that your relationships and life are complete."
+          "Your friends and family are present, but you <b>do not feel that</b> your relationships and life are complete.",
+          "Your friends and family are present, and you <b>feel that</b> your relationships and life are complete."
         ]
       },
       { name: "Financial and Medical",
         levels: [
-          "You do not have your financial and medical affairs in order.",
-          "You have your financial and medical affairs in order."
+          "You <b>do not have</b> your financial and medical affairs in order.",
+          "You <b>have</b> your financial and medical affairs in order."
         ]
       }
     ];
@@ -194,6 +224,57 @@
       el.classList.add("is-hidden");
       el.setAttribute("aria-busy","false");
     }
+
+    // ---- Helper overlay (Question 1 only) ----
+    function showQ1HelpOverlay(){
+      const el = document.getElementById("q1HelpOverlay");
+      if (!el) return;
+      el.classList.remove("is-hidden");
+
+      // focus "Got it" for quick dismissal
+      const btn = document.getElementById("q1HelpCloseBtn");
+      if (btn) btn.focus({ preventScroll: true });
+    }
+
+    function hideQ1HelpOverlay(){
+      const el = document.getElementById("q1HelpOverlay");
+      if (!el) return;
+      el.classList.add("is-hidden");
+    }
+
+    function wireQ1HelpOverlay(){
+      const overlay = document.getElementById("q1HelpOverlay");
+      if (!overlay) return;
+
+      const closeBtn = document.getElementById("q1HelpCloseBtn");
+      const closeX = document.getElementById("q1HelpCloseX");
+
+      const close = () => {
+        hideQ1HelpOverlay();
+
+        // return focus to scenario 1 radio (safe default)
+        const rb1 = document.getElementById("radioSc1");
+        if (rb1) rb1.focus({ preventScroll: true });
+      };
+
+      if (closeBtn) closeBtn.onclick = close;
+      if (closeX) closeX.onclick = close;
+
+      // click outside card closes
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) close();
+      });
+
+      // Esc closes
+      const escHandler = (e) => {
+        if (e.key === "Escape" && !overlay.classList.contains("is-hidden")) {
+          e.preventDefault();
+          close();
+        }
+      };
+      document.addEventListener("keydown", escHandler);
+    }
+
 
     // ---- Wiring events fields → Netlify function (SAFE) ----
     async function logEvent(event_name, event_value = "") {
@@ -312,7 +393,7 @@
           </div>
 
           <div class="cta-row">
-            <button type="button" class="btn btn-primary" id="startBtn">Start survey</button>
+            <button type="button" class="btn btn-primary" id="startBtn">Begin</button>
           </div>
 
           <p class="fineprint">
@@ -379,7 +460,7 @@
           <div class="task-head">
             <div class="task-meta">
               <span class="task-count">Question ${idx + 1} of ${assignedBlock.length}</span>
-              <span class="task-prompt">Choose Scenario 1 or 2</span>
+              <span class="task-prompt">Choose the scenario (1 or 2) that matters more to you.</span>
             </div>
             <div class="progress" aria-label="Progress">
               <div class="progress-bar" style="width:${progressPct}%"></div>
@@ -388,52 +469,66 @@
 
           <div class="table-wrap" role="region" aria-label="Scenarios table">
             <table class="scenarioTbl" id="scenarioTbl" aria-label="Scenario choice">
-              <thead>
+            <colgroup>
+              <col style="width:48%">
+              <col style="width:4%">
+              <col style="width:48%">
+            </colgroup>
+
+            <thead>
+              <tr>
+                <th scope="col" class="centered scHead sc1head" data-scn="1">
+                  <label class="scHeadRadio">
+                    <input
+                      type="radio"
+                      name="rb"
+                      value="Option 1"
+                      id="radioSc1"
+                      ${answers[idx] === "Option 1" ? "checked" : ""}
+                    >
+                    <span>Scenario 1</span>
+                  </label>
+                </th>
+
+                <th class="orHead" aria-hidden="true"></th>
+
+                <th scope="col" class="centered scHead sc2head" data-scn="2">
+                  <label class="scHeadRadio">
+                    <input
+                      type="radio"
+                      name="rb"
+                      value="Option 2"
+                      id="radioSc2"
+                      ${answers[idx] === "Option 2" ? "checked" : ""}
+                    >
+                    <span>Scenario 2</span>
+                  </label>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${attributes.map((attr, i) => `
                 <tr>
-                  <th scope="col" style="width: 28%"></th>
+                  <td class="scCell sc1col" data-scn="1" role="button" aria-label="Select Scenario 1">
+                    <div class="scCard">
+                      <span class="sr-only">${attr.name}: </span>${attr.levels[profileA[i]]}
+                    </div>
+                  </td>
 
-                  <th scope="col" class="centered scHead sc1head" data-scn="1" style="width: 36%">
-                    <label class="scHeadRadio">
-                      <input
-                        type="radio"
-                        name="rb"
-                        value="Option 1"
-                        id="radioSc1"
-                        ${answers[idx] === "Option 1" ? "checked" : ""}
-                      >
-                      <span>Scenario 1</span>
-                    </label>
-                  </th>
+                  <td class="orCell" aria-hidden="true">
+                    <span class="orBadge">OR</span>
+                  </td>
 
-                  <th scope="col" class="centered scHead sc2head" data-scn="2" style="width: 36%">
-                    <label class="scHeadRadio">
-                      <input
-                        type="radio"
-                        name="rb"
-                        value="Option 2"
-                        id="radioSc2"
-                        ${answers[idx] === "Option 2" ? "checked" : ""}
-                      >
-                      <span>Scenario 2</span>
-                    </label>
-                  </th>
+                  <td class="scCell sc2col" data-scn="2" role="button" aria-label="Select Scenario 2">
+                    <div class="scCard">
+                      <span class="sr-only">${attr.name}: </span>${attr.levels[profileB[i]]}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                ${attributes.map((attr, i) => `
-                  <tr>
-                    <th scope="row" class="rowhead">${attr.name}</th>
-                    <td class="scCell sc1col" data-scn="1" role="button" aria-label="Select Scenario 1">
-                      ${attr.levels[profileA[i]]}
-                    </td>
-                    <td class="scCell sc2col" data-scn="2" role="button" aria-label="Select Scenario 2">
-                      ${attr.levels[profileB[i]]}
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
+              `).join('')}
+            </tbody>
+          </table>           
           </div>
 
           <div class="btn-row">
@@ -455,8 +550,30 @@
       const rb2 = document.getElementById('radioSc2');
 
       function updateColHighlight(scenarioNum) {
+        // clear cell highlights
         table.querySelectorAll('.selectedScenarioCol').forEach(el => el.classList.remove('selectedScenarioCol'));
         table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('selectedScenarioCol'));
+
+        // NEW: table-level state (for dimming + styling)
+        table.classList.add('hasSelection');
+        table.dataset.selected = String(scenarioNum);
+      }
+
+// ---- Show helper overlay ONLY on the first question, once per run ----
+      if (idx === 0) {
+        const helpKey = `dc_q1_help_shown_${clientRunId || sessionStorage.getItem("dc_client_run_id") || ""}`;
+
+        if (!sessionStorage.getItem(helpKey)) {
+          sessionStorage.setItem(helpKey, "1");
+
+          // wire once (safe even if called multiple times)
+          wireQ1HelpOverlay();
+
+          // open after a frame so layout paints first
+          requestAnimationFrame(() => {
+            showQ1HelpOverlay();
+          });
+        }
       }
 
       function setHover(scenarioNum, on){
