@@ -22,7 +22,7 @@
   </header>
 
   <main class="page">
-    <header class="page-head">
+    <header class="page-head" id="pageHead">
       <h1 class="survey-title">What Matters Most to Me at the End of Life?</h1>
       <p class="survey-subtitle">A short research survey to identify your end-of-life values profile.</p>
     </header>
@@ -95,6 +95,17 @@
   </div>
 
   <script>
+
+    // --- Page head show/hide (for results page) ---
+    function showPageHead(){
+      const el = document.getElementById("pageHead");
+      if (el) el.style.display = "";
+    }
+
+    function hidePageHead(){
+      const el = document.getElementById("pageHead");
+      if (el) el.style.display = "none";
+      }
 
     // --- Always start at top on load (including Safari/Chrome bfcache restores) ---
       (function forceTopOnLoad(){
@@ -356,6 +367,7 @@
       clearTaskKeyHandler();
       clearIntroKeyHandler();
       scrollToTopInstant();
+      showPageHead();
 
       document.getElementById('mainBlock').innerHTML = `
         <div class="survey-card">
@@ -404,6 +416,7 @@
 
       const startBtn = document.getElementById('startBtn');
 
+      
       function startSurvey() {
         // ---- IDs for dedupe + session tracking ----
         clientRunId = crypto.randomUUID();
@@ -448,6 +461,9 @@
       clearTaskKeyHandler();
       clearIntroKeyHandler();
       scrollToTopInstant();
+      hidePageHead();
+
+      if (!assignedBlock || !assignedBlock[idx]) { renderIntro(); return; }
 
       currentTask = idx;
       const task = assignedBlock[idx];

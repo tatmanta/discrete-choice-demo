@@ -1,6 +1,9 @@
 /* css/styles.css */
+/* =========================================
+   Light, Hal-like minimal layout
+========================================= */
 
-/* ===== Light, Hal-like minimal layout ===== */
+/* ===== Design tokens ===== */
 :root{
   --bg: #ffffff;
   --text: #111318;
@@ -11,15 +14,15 @@
   --shadow: 0 18px 50px rgba(17, 19, 24, 0.08);
 
   /* ✅ UCLA accent system */
-  --uclaBlue: #2774AE;                 /* UCLA Blue */
-  --accent: var(--uclaBlue);           /* primary accent used across UI */
+  --uclaBlue: #2774AE;                    /* UCLA Blue */
+  --accent: var(--uclaBlue);             /* primary accent used across UI */
   --accentText: #ffffff;
-  --accentHover: #1F5F8E;              /* slightly darker for hover */
-  --accentSoft: rgba(39, 116, 174, 0.10); /* light tint for surfaces */
+  --accentHover: #1F5F8E;                /* slightly darker for hover */
+  --accentSoft: rgba(39, 116, 174, 0.10);/* light tint for surfaces */
   --accentSoft2: rgba(39, 116, 174, 0.06);
-  --highlight: rgba(39, 116, 174, 0.12);  /* selected column tint (heavier) */
-  --hoverTint: rgba(39, 116, 174, 0.06);  /* hover tint (lighter) */
-  --ring: rgba(39, 116, 174, 0.28);       /* focus/outline */
+  --highlight: rgba(39, 116, 174, 0.12); /* selected column tint (heavier) */
+  --hoverTint: rgba(39, 116, 174, 0.06); /* hover tint (lighter) */
+  --ring: rgba(39, 116, 174, 0.28);      /* focus/outline */
   --ringStrong: rgba(39, 116, 174, 0.45);
 
   --proto: #fff2a8;
@@ -29,6 +32,7 @@
   --zebra: rgba(17,19,24,0.015);
 }
 
+/* ===== Base reset ===== */
 *{ box-sizing: border-box; }
 
 html, body{
@@ -41,6 +45,10 @@ html, body{
 
 a{ color: inherit; text-decoration: none; }
 a:hover{ text-decoration: underline; }
+
+/* =========================================
+   Global layout
+========================================= */
 
 .proto-banner{
   max-width: 1040px;
@@ -155,6 +163,10 @@ a:hover{ text-decoration: underline; }
   text-align: center;
 }
 
+/* =========================================
+   Buttons
+========================================= */
+
 .btn{
   appearance: none;
   border-radius: 999px;
@@ -179,14 +191,14 @@ a:hover{ text-decoration: underline; }
 }
 .btn-primary:hover{ background: var(--accentHover); }
 
-.btn-ghost{
-  background: #fff;
-}
+.btn-ghost{ background: #fff; }
 
-/* Task header + progress */
-.task-head{
-  margin-bottom: 14px;
-}
+/* =========================================
+   Task header + progress
+========================================= */
+
+.task-head{ margin-bottom: 14px; }
+
 .task-meta{
   display:flex;
   justify-content: space-between;
@@ -195,13 +207,13 @@ a:hover{ text-decoration: underline; }
   align-items: baseline;
   margin-bottom: 10px;
 }
+
 .task-count{
   font-weight: 600;
   color: var(--text);
 }
-.task-prompt{
-  color: var(--muted);
-}
+
+.task-prompt{ color: var(--muted); }
 
 .progress{
   width: 100%;
@@ -210,30 +222,32 @@ a:hover{ text-decoration: underline; }
   border-radius: 999px;
   overflow: hidden;
 }
+
 .progress-bar{
   height: 100%;
   background: var(--accent); /* ✅ UCLA blue */
   width: 0%;
 }
 
-/* Table container: allow horizontal scroll on mobile */
+/* =========================================
+   Scenario table container (scroll)
+========================================= */
+
 .table-wrap{
   max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
-  border-radius: 12px;
-  border: 1px solid var(--border2);
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(17,19,24,0.06);
   touch-action: pan-x pan-y;
-  clip-path: inset(0 round 12px);
+
+  /* “Card-style” presentation (final) */
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  clip-path: none;
 }
 
-
-/* ===== Mobile: make horizontal scroll obvious ===== */
 @media (max-width: 720px){
-
   .table-wrap{
     position: relative;
     overflow-x: auto;
@@ -242,44 +256,46 @@ a:hover{ text-decoration: underline; }
   }
 }
 
+/* =========================================
+   Scenario grid → Card-style (like mock)
+========================================= */
+
 table.scenarioTbl{
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
   min-width: 720px;
-  background: #fff;
+  border-collapse: separate;
+  border-spacing: 14px 14px;
+  background: transparent;
 }
 
 table.scenarioTbl th,
 table.scenarioTbl td{
-  padding: 12px 12px;
   vertical-align: top;
-  border-bottom: 1px solid var(--border2);
-  border-right: 1px solid var(--border2);
   line-height: 1.45;
   font-size: 0.96rem;
 }
 
+/* Header row: control bar */
 table.scenarioTbl thead th{
-  background: var(--tableHead);
-  font-weight: 700;
-  color: var(--text);
-
-  /* sticky header */
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 0 8px 0;
+  font-weight: 700;
+  color: var(--text);
   backdrop-filter: blur(6px);
 }
 
-/* Subtle zebra striping for scan-ability */
-table.scenarioTbl tbody tr:nth-child(odd) td{ background: #fff; }
-table.scenarioTbl tbody tr:nth-child(even) td{ background: var(--zebra); }
+/* Body: remove grid lines */
+table.scenarioTbl td{
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0;
+}
 
-table.scenarioTbl tr > *:first-child{ border-left: none; }
-table.scenarioTbl tr > *:last-child{ border-right: none; }
-table.scenarioTbl tr:last-child > *{ border-bottom: none; }
-
+/* Column head / row head helpers */
 .rowhead{
   font-weight: 600;
   color: rgba(17,19,24,0.82);
@@ -291,39 +307,6 @@ table.scenarioTbl tr:last-child > *{ border-bottom: none; }
 .scCell, .scHead{ cursor: pointer; }
 .scHead .scHeadRadio{ cursor: pointer; }
 
-
-/* ===== Mobile: tighten scenario columns slightly ===== */
-@media (max-width: 720px){
-
-  /* Reduce overall table width just enough to reveal column 2 */
-  table.scenarioTbl{
-    min-width: 640px; /* was 720px */
-  }
-
-  /* Slightly reduce card padding */
-  .scCard{
-    padding: 14px 14px; /* was 18px */
-    font-size: 0.95rem;
-  }
-
-  /* Reduce inter-card spacing */
-  table.scenarioTbl{
-    border-spacing: 10px 12px; /* was 14px 14px */
-  }
-
-  /* Tighten OR column */
-  .orCell{
-    min-width: 32px; /* was 44px */
-  }
-
-  .orBadge{
-    font-size: 10px;
-    padding: 4px 6px;
-    letter-spacing: 0.06em;
-  }
-}
-
-
 /* Header radios (Scenario 1 / 2) */
 .scHeadRadio{
   display: inline-flex;
@@ -332,27 +315,42 @@ table.scenarioTbl tr:last-child > *{ border-bottom: none; }
   gap: 10px;
   cursor: pointer;
   user-select: none;
+
+  /* pill treatment */
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(17,19,24,0.02);
+  transition: background 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
+
+.scHeadRadio:hover{ background: rgba(17,19,24,0.04); }
+
 .scHeadRadio input{
   width: 16px;
   height: 16px;
   accent-color: var(--accent); /* ✅ UCLA blue */
   transform: translateY(1px);
 }
-.scHeadRadio span{
-  font-weight: 700;
-}
-
-/* Keyboard focus ring (keep on survey, remove on results via .results-page rules) */
-.scenarioTbl [data-scn]:focus-visible{
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--ringStrong);
-}
+.scHeadRadio span{ font-weight: 700; }
 
 /* Don’t add extra ring to the radio itself */
 .scHeadRadio input:focus-visible{
   outline: none;
   box-shadow: none;
+}
+
+/* Keyboard focus ring (keep on survey, remove on results via .results-page rules) */
+.scenarioTbl [data-scn]:focus-visible{
+  outline: none;
+  box-shadow: none; /* prevents square focus box on td */
+}
+
+/* Put focus styling on the card instead */
+td:focus-visible .scCard,
+th:focus-within .scHeadRadio{
+  box-shadow: 0 0 0 3px var(--ringStrong);
 }
 
 /* Radios as subtle pills (if you use this class anywhere) */
@@ -372,71 +370,17 @@ table.scenarioTbl tr:last-child > *{ border-bottom: none; }
   height: 16px;
   accent-color: var(--accent);
 }
-.radioPill:hover{
-  background: var(--accentSoft2);
-}
+.radioPill:hover{ background: var(--accentSoft2); }
 
-/* =========================================
-   Scenario grid → Card-style (like mock)
-   Paste AFTER your existing table styles
-========================================= */
-
-.table-wrap{
-  border: none;
-  box-shadow: none;
-  background: transparent;
-  clip-path: none;
-}
-
-/* Let the “cards” breathe */
-table.scenarioTbl{
-  min-width: 720px;              /* keep your mobile horizontal scroll behavior */
-  border-collapse: separate;
-  border-spacing: 14px 14px;     /* reduced spacing */
-  background: transparent;
-}
-
-/* Header row: make it feel like a control bar */
-table.scenarioTbl thead th{
-  position: sticky;
-  top: 0;
-  z-index: 3;
-
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 0 8px 0;
-}
-
-/* Make the header labels feel like selectable pills */
-.scHeadRadio{
-  width: 100%;
-  justify-content: center;
-  padding: 10px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(17,19,24,0.02);
-  transition: background 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
-}
-.scHeadRadio:hover{
-  background: rgba(17,19,24,0.04);
-}
-
-/* Body: remove “grid” lines */
-table.scenarioTbl td{
-  border: 0 !important;
-  background: transparent !important;
-  padding: 0;                  /* the card will own padding */
-}
-
-/* Keep TDs as table-cells (do NOT set display:block on td) */
+/* TD click area */
 .scCell{
-  padding: 0 !important;           /* td has no padding; the card owns it */
+  padding: 0 !important;
   background: transparent !important;
   border: 0 !important;
   vertical-align: top;
 }
 
-/* === IMPORTANT: remove the light “rectangle select” on the TD itself === */
+/* remove TD-level selection rectangles */
 table.scenarioTbl td.selectedScenarioCol,
 table.scenarioTbl td.hoverScenarioCol{
   background: transparent !important;
@@ -448,11 +392,9 @@ table.scenarioTbl td.hoverScenarioCol{
   background: #fff;
   border: 2px solid rgba(17,19,24,0.18);
   border-radius: 22px;
-
   padding: 18px 18px;
   line-height: 1.45;
   font-size: 1rem;
-
   box-shadow: 0 10px 22px rgba(17,19,24,0.08);
   transition:
     transform 140ms ease,
@@ -468,18 +410,18 @@ table.scenarioTbl td.hoverScenarioCol{
   box-shadow: 0 14px 28px rgba(17,19,24,0.10);
 }
 
-/* Optional: also reflect hover state when JS adds .hoverScenarioCol */
+/* Optional: reflect hover state when JS adds .hoverScenarioCol */
 td.hoverScenarioCol .scCard{
   transform: translateY(-1px);
   box-shadow: 0 14px 28px rgba(17,19,24,0.10);
 }
 
-/* Selected column: subtle, no heavy rectangle */
+/* Selected column */
 td.selectedScenarioCol .scCard{
-  border-color: rgba(39,116,174,0.55); /* UCLA blue tint */
+  border-color: rgba(39,116,174,0.55);
   box-shadow:
     0 14px 28px rgba(17,19,24,0.10),
-    0 0 0 2px rgba(39,116,174,0.22);   /* soft ring */
+    0 0 0 2px rgba(39,116,174,0.22);
   transform: translateY(-1px);
 }
 
@@ -492,21 +434,21 @@ table.scenarioTbl.hasSelection[data-selected="2"] [data-scn="1"] .scCard{
   transform: none;
 }
 
-/* Hover BEFORE a selection exists (normal exploration) */
+/* Hover BEFORE selection exists */
 table.scenarioTbl:not(.hasSelection) .scCell:hover .scCard{
   transform: translateY(-1px);
   box-shadow: 0 14px 28px rgba(17,19,24,0.10);
 }
 
-/* Hover AFTER a selection exists (very subtle reconsider affordance) */
+/* Hover AFTER selection exists */
 table.scenarioTbl.hasSelection .scCell:not(.selectedScenarioCol):hover .scCard{
-  opacity: 0.7;                         /* from ~0.55 */
-  border-color: rgba(17,19,24,0.35);    /* neutral hint, not blue */
+  opacity: 0.7;
+  border-color: rgba(17,19,24,0.35);
   box-shadow: none;
   transform: none;
 }
 
-/* And explicitly suppress hover on the selected column */
+/* Suppress hover on the selected column */
 table.scenarioTbl.hasSelection .selectedScenarioCol:hover .scCard{
   box-shadow: inherit;
   transform: inherit;
@@ -525,17 +467,12 @@ table.scenarioTbl.hasSelection .selectedScenarioCol:hover .scCard{
   background: transparent !important;
   vertical-align: middle;
   text-align: center;
-
-  position: relative; /* anchor for absolute centering */
+  position: relative;
   min-width: 44px;
 }
+table.scenarioTbl td.orCell{ box-shadow: none !important; }
 
-/* Ensure no TD-level outlines ever show on OR */
-table.scenarioTbl td.orCell{
-  box-shadow: none !important;
-}
-
-/* Badge is centered in the OR column for each row */
+/* Badge centered in OR column */
 .orBadge{
   position: absolute;
   left: 50%;
@@ -561,7 +498,7 @@ table.scenarioTbl td.orCell{
   user-select: none;
 }
 
-/* Also “activate” the chosen header pill */
+/* “activate” chosen header pill */
 table.scenarioTbl.hasSelection[data-selected="1"] th[data-scn="1"] .scHeadRadio,
 table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   background: #fff;
@@ -569,42 +506,20 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   box-shadow: 0 0 0 2px rgba(17,19,24,0.22);
 }
 
-/* Keep keyboard focus obvious (don’t create a TD rectangle) */
-.scenarioTbl [data-scn]:focus-visible{
-  outline: none;
-  box-shadow: none; /* prevents square focus box on td */
-}
-
-/* Put focus styling on the card instead */
-td:focus-visible .scCard,
-th:focus-within .scHeadRadio{
-  box-shadow: 0 0 0 3px var(--ringStrong);
-}
-
-/* Mobile: reduce OR badge + spacing slightly */
+/* Mobile: horizontal scroll affordance (final) */
 @media (max-width: 720px){
-  table.scenarioTbl{
-    border-spacing: 12px 12px;
-  }
-  .orBadge{
-    font-size: 11px;
-    padding: 5px 8px;
-  }
-}
-
-/* ===== Mobile: horizontal scroll affordance (FINAL OVERRIDES) ===== */
-@media (max-width: 720px){
-  table.scenarioTbl{ min-width: 640px; }
+  table.scenarioTbl{ min-width: 600px; }
   table.scenarioTbl{ border-spacing: 10px 12px; }
   .scCard{ padding: 14px 14px; font-size: 0.95rem; }
   .orCell{ min-width: 32px; }
   .orBadge{ font-size: 10px; padding: 4px 6px; letter-spacing: 0.06em; }
 }
 
+/* =========================================
+   Screen reader styles
+========================================= */
 
-/* ===== Screen reader styles ===== */
-
-.sr-only {
+.sr-only{
   position: absolute !important;
   width: 1px; height: 1px;
   padding: 0; margin: -1px;
@@ -614,7 +529,10 @@ th:focus-within .scHeadRadio{
   border: 0;
 }
 
-/* Results */
+/* =========================================
+   Results page
+========================================= */
+
 .kicker{
   margin: 0 0 10px 0;
   text-transform: uppercase;
@@ -649,169 +567,18 @@ th:focus-within .scHeadRadio{
   line-height: 1.7;
 }
 
-.result-actions{
-  justify-content: center;
-}
+.result-actions{ justify-content: center; }
 
 /* Results hero image */
 .results-page .result-hero{
   width: 50%;
-  max-width: 280px; /* safety cap so it never gets huge */
+  max-width: 280px;
   height: auto;
   display: block;
   margin: 10px auto 14px;
 }
 
-/* Footer */
-.site-footer{
-  border-top: 1px solid var(--border2);
-  background:#fff;
-}
-.site-footer-inner{
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 18px 18px 26px;
-  text-align:center;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-/* Intro hero image (intro page only) */
-.intro-hero{
-  margin: 0 0 16px 0;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--border2);
-  background: rgba(17, 19, 24, 0.02);
-}
-
-.intro-hero img{
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.intro-hero{
-  aspect-ratio: 16 / 9;
-}
-
-.intro-hero img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* ===== Footer: research affiliations ===== */
-.footer-meta{
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
-
-.footer-logos{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 26px;
-  flex-wrap: wrap;
-}
-
-.footer-logos img{
-  max-width: 80px;
-  width: auto;
-  opacity: 0.85;
-  filter: grayscale(100%);
-}
-
-@media (max-width: 720px){
-  .footer-logos img{ max-width: 60px; }
-}
-
-/* Responsive */
-@media (max-width: 720px){
-  .survey-title{ font-size: 1.55rem; }
-  .site-header-inner{
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .site-nav{
-    justify-content: flex-start;
-    gap: 12px;
-  }
-  .survey-card{
-    padding: 18px 16px;
-  }
-  .btn-row{
-    flex-direction: column;
-  }
-  .btn-row > *{
-    width: 100%;
-  }
-}
-
-/* Question 1 Landing Page Helper modal refinements */
-
-/* ===== Question 1 Helper Modal (Apple-style) ===== */
-
-/* Modal card is the positioning anchor */
-.help-card{
-  position: relative;
-  max-width: 560px;
-}
-
-/* Header */
-.help-head{
-  text-align: center;
-  margin-bottom: 14px;
-}
-
-/* Title */
-.help-head .modal-title{
-  margin: 0;
-  text-align: center;
-}
-
-/* Close button — Apple-style, top-right */
-.help-card .modal-close{
-  position: absolute;
-  top: 14px;
-  right: 14px;
-
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-
-  font-size: 22px;
-  line-height: 1;
-  font-weight: 400;
-  color: rgba(17,19,24,0.45);
-  cursor: pointer;
-}
-
-/* Hover / active states (subtle, Apple-like) */
-.help-card .modal-close:hover{
-  background: rgba(17,19,24,0.04);
-  color: rgba(17,19,24,0.75);
-}
-
-.help-card .modal-close:active{
-  background: rgba(17,19,24,0.08);
-}
-
-/* Accessible focus ring */
-.help-card .modal-close:focus-visible{
-  outline: none;
-  box-shadow: 0 0 0 2px var(--ring);
-}
-
-/* Body text spacing */
-.help-body p{
-  margin: 10px 0;
-}
-
-/* ===== Results loading overlay ===== */
+/* Results loading overlay */
 .loading-overlay{
   position: fixed;
   inset: 0;
@@ -821,6 +588,7 @@ th:focus-within .scHeadRadio{
   place-items: center;
   z-index: 9999;
 }
+.loading-overlay.is-hidden{ display: none; }
 
 .loading-card{
   width: min(520px, calc(100% - 32px));
@@ -851,21 +619,14 @@ th:focus-within .scHeadRadio{
   height: 34px;
   border-radius: 999px;
   border: 3px solid rgba(39,116,174,0.18);
-  border-top-color: #2774AE; /* UCLA blue */
+  border-top-color: #2774AE;
   animation: spin 0.9s linear infinite;
   margin: 0 auto;
 }
 
-@keyframes spin{
-  to { transform: rotate(360deg); }
-}
+@keyframes spin{ to { transform: rotate(360deg); } }
 
-/* hide helper */
-.loading-overlay.is-hidden{
-  display: none;
-}
-
-/* ===== Results: distribution + share ===== */
+/* Results: distribution + share */
 .dist-card, .share-card{
   margin-top: 18px;
   padding: 18px 18px;
@@ -935,9 +696,7 @@ th:focus-within .scHeadRadio{
   background: rgba(17,19,24,0.55);
 }
 
-.bar-fill.is-you{
-  background: rgba(17,19,24,0.85);
-}
+.bar-fill.is-you{ background: rgba(17,19,24,0.85); }
 
 .bar-val{
   font-variant-numeric: tabular-nums;
@@ -995,6 +754,72 @@ th:focus-within .scHeadRadio{
   .bar-val{ justify-self: start; }
 }
 
+/* =========================================
+   Media: hero images (intro)
+========================================= */
+
+.intro-hero{
+  margin: 0 0 16px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  background: rgba(17, 19, 24, 0.02);
+  aspect-ratio: 16 / 9;
+}
+.intro-hero img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =========================================
+   Footer + affiliations
+========================================= */
+
+.site-footer{
+  border-top: 1px solid var(--border2);
+  background:#fff;
+}
+.site-footer-inner{
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 18px 18px 26px;
+  text-align:center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Footer: research affiliations */
+.footer-meta{
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.footer-logos{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.footer-logos img{
+  max-width: 80px;
+  width: auto;
+  opacity: 0.85;
+  filter: grayscale(100%);
+}
+
+@media (max-width: 720px){
+  .footer-logos img{ max-width: 60px; }
+}
+
+/* =========================================
+   Modal system
+========================================= */
+
 /* Modal overlay + card */
 .modal-overlay{
   position: fixed;
@@ -1017,9 +842,7 @@ th:focus-within .scHeadRadio{
   position: relative;
 }
 
-.modal-title{
-  margin: 6px 0 10px;
-}
+.modal-title{ margin: 6px 0 10px; }
 
 .modal-lede{
   color: var(--muted);
@@ -1027,6 +850,7 @@ th:focus-within .scHeadRadio{
   line-height: 1.5;
 }
 
+/* Close button base */
 .modal-close{
   position: absolute;
   top: 12px;
@@ -1049,25 +873,60 @@ th:focus-within .scHeadRadio{
   font-size: 22px;
   font-weight: 400;
 }
-
 .subtle-close:hover{
   background: rgba(17,19,24,0.04);
   color: rgba(17,19,24,0.75);
 }
-
-.subtle-close:active{
-  background: rgba(17,19,24,0.08);
-}
-
+.subtle-close:active{ background: rgba(17,19,24,0.08); }
 .subtle-close:focus-visible{
   outline: none;
   box-shadow: 0 0 0 2px var(--ring);
 }
 
+/* Question 1 Helper Modal (Apple-style refinements) */
+.help-card{
+  position: relative;
+  max-width: 560px;
+}
+
+.help-head{
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.help-head .modal-title{
+  margin: 0;
+  text-align: center;
+}
+
+/* Close button — Apple-style, top-right */
 .help-card .modal-close{
   top: 14px;
   right: 14px;
+
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 400;
+  color: rgba(17,19,24,0.45);
+  cursor: pointer;
 }
+.help-card .modal-close:hover{
+  background: rgba(17,19,24,0.04);
+  color: rgba(17,19,24,0.75);
+}
+.help-card .modal-close:active{ background: rgba(17,19,24,0.08); }
+.help-card .modal-close:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.help-body p{ margin: 10px 0; }
 
 .science-diagram{
   display: flex;
@@ -1097,4 +956,28 @@ th:focus-within .scHeadRadio{
   color: var(--muted);
   margin: 8px 0 0;
   line-height: 1.5;
+}
+
+/* =========================================
+   Responsive (general)
+========================================= */
+
+@media (max-width: 720px){
+  .survey-title{ font-size: 1.55rem; }
+
+  .site-header-inner{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-nav{
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .survey-card{ padding: 18px 16px; }
+
+  .btn-row{ flex-direction: column; }
+
+  .btn-row > *{ width: 100%; }
 }
