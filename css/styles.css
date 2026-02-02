@@ -230,46 +230,33 @@ a:hover{ text-decoration: underline; }
   clip-path: inset(0 round 12px);
 }
 
-/* ===== Mobile horizontal scroll affordance ===== */
+/* ===== Mobile: make horizontal scroll obvious (don’t rely on iOS scrollbar) ===== */
 @media (max-width: 720px){
+
   .table-wrap{
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 12px; /* gives iOS scrollbar breathing room */
+    padding-bottom: 16px; /* keep */
   }
 
-  /* edge fade = "this scrolls" signal */
-  .table-wrap::before,
+  /* right-edge fade cue */
   .table-wrap::after{
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 22px;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  /* left fade */
-  .table-wrap::before{
-    left: 0;
-    background: linear-gradient(
-      to right,
-      rgba(255,255,255,1),
-      rgba(255,255,255,0)
-    );
-  }
-
-  /* right fade */
-  .table-wrap::after{
+    content:"";
+    position: sticky;      /* sticks while you scroll horizontally */
     right: 0;
-    background: linear-gradient(
-      to left,
+    top: 0;
+    height: 100%;
+    width: 26px;
+    display: block;
+    pointer-events: none;
+    background: linear-gradient(to left,
       rgba(255,255,255,1),
       rgba(255,255,255,0)
     );
   }
+}
+
 }
 
 table.scenarioTbl{
