@@ -230,6 +230,48 @@ a:hover{ text-decoration: underline; }
   clip-path: inset(0 round 12px);
 }
 
+/* ===== Mobile horizontal scroll affordance ===== */
+@media (max-width: 720px){
+  .table-wrap{
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px; /* gives iOS scrollbar breathing room */
+  }
+
+  /* edge fade = "this scrolls" signal */
+  .table-wrap::before,
+  .table-wrap::after{
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 22px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* left fade */
+  .table-wrap::before{
+    left: 0;
+    background: linear-gradient(
+      to right,
+      rgba(255,255,255,1),
+      rgba(255,255,255,0)
+    );
+  }
+
+  /* right fade */
+  .table-wrap::after{
+    right: 0;
+    background: linear-gradient(
+      to left,
+      rgba(255,255,255,1),
+      rgba(255,255,255,0)
+    );
+  }
+}
+
 table.scenarioTbl{
   width: 100%;
   border-collapse: separate;
@@ -279,6 +321,37 @@ table.scenarioTbl tr:last-child > *{ border-bottom: none; }
 .scCell, .scHead{ cursor: pointer; }
 .scHead .scHeadRadio{ cursor: pointer; }
 
+
+/* ===== Mobile: tighten scenario columns slightly ===== */
+@media (max-width: 720px){
+
+  /* Reduce overall table width just enough to reveal column 2 */
+  table.scenarioTbl{
+    min-width: 640px; /* was 720px */
+  }
+
+  /* Slightly reduce card padding */
+  .scCard{
+    padding: 14px 14px; /* was 18px */
+    font-size: 0.95rem;
+  }
+
+  /* Reduce inter-card spacing */
+  table.scenarioTbl{
+    border-spacing: 10px 12px; /* was 14px 14px */
+  }
+
+  /* Tighten OR column */
+  .orCell{
+    min-width: 32px; /* was 44px */
+  }
+
+  .orBadge{
+    font-size: 10px;
+    padding: 4px 6px;
+    letter-spacing: 0.06em;
+  }
+}
 
 
 /* Header radios (Scenario 1 / 2) */
