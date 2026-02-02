@@ -240,24 +240,7 @@ a:hover{ text-decoration: underline; }
     -webkit-overflow-scrolling: touch;
     padding-bottom: 16px;
   }
-
-  /* Right-edge fade cue */
-  .table-wrap::after{
-    content:"";
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 28px;
-    pointer-events: none;
-    background: linear-gradient(to left,
-      rgba(255,255,255,1),
-      rgba(255,255,255,0)
-    );
-  }
 }
-
-
 
 table.scenarioTbl{
   width: 100%;
