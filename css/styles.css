@@ -230,25 +230,25 @@ a:hover{ text-decoration: underline; }
   clip-path: inset(0 round 12px);
 }
 
-/* ===== Mobile: make horizontal scroll obvious (don’t rely on iOS scrollbar) ===== */
+
+/* ===== Mobile: make horizontal scroll obvious ===== */
 @media (max-width: 720px){
 
   .table-wrap{
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 16px; /* keep */
+    padding-bottom: 16px;
   }
 
-  /* right-edge fade cue */
+  /* Right-edge fade cue */
   .table-wrap::after{
     content:"";
-    position: sticky;      /* sticks while you scroll horizontally */
+    position: absolute;
     right: 0;
     top: 0;
-    height: 100%;
-    width: 26px;
-    display: block;
+    bottom: 0;
+    width: 28px;
     pointer-events: none;
     background: linear-gradient(to left,
       rgba(255,255,255,1),
@@ -257,7 +257,7 @@ a:hover{ text-decoration: underline; }
   }
 }
 
-}
+
 
 table.scenarioTbl{
   width: 100%;
@@ -608,6 +608,16 @@ th:focus-within .scHeadRadio{
     padding: 5px 8px;
   }
 }
+
+/* ===== Mobile: horizontal scroll affordance (FINAL OVERRIDES) ===== */
+@media (max-width: 720px){
+  table.scenarioTbl{ min-width: 640px; }
+  table.scenarioTbl{ border-spacing: 10px 12px; }
+  .scCard{ padding: 14px 14px; font-size: 0.95rem; }
+  .orCell{ min-width: 32px; }
+  .orBadge{ font-size: 10px; padding: 4px 6px; letter-spacing: 0.06em; }
+}
+
 
 /* ===== Screen reader styles ===== */
 
