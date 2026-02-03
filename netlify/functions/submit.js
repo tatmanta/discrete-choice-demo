@@ -148,5 +148,3 @@ exports.handler = async (event) => {
 
   return jsonResponse(200, { ok: true, deduped: false, response_id });
 };
-
-console.log("geo fields:", body.geo_country, body.geo_region, body.geo_city, body.geo_timezone);
