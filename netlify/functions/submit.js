@@ -150,5 +150,3 @@ exports.handler = async (event) => {
 };
 
 console.log("geo fields:", body.geo_country, body.geo_region, body.geo_city, body.geo_timezone);
-
-gi

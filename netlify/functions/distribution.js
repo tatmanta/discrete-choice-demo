@@ -23,7 +23,7 @@ exports.handler = async () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           error: "SheetDB read failed",
-          status: resp.status,Í
+          status: resp.status,
           details: String(text || "").slice(0, 300),
         }),
       };
