@@ -33,9 +33,6 @@ exports.handler = async (event) => {
   if (!SHEETDB_URL) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
   if (!TOKEN) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_BEARER_TOKEN env var" });
 
-  // Debug (safe: doesn’t print token)
-  console.log("SHEETDB_URL prefix:", String(SHEETDB_URL).slice(0, 120));
-
   const body = safeJsonParse(event.body || "");
   if (!body) return jsonResponse(400, { ok: false, error: "Invalid JSON" });
 

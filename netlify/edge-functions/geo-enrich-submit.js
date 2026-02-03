@@ -31,8 +31,7 @@ export default async (request, context) => {
 
   const resp = await context.next(newReq);
 
-  // Add a header so you can prove the Edge Function ran
-  const out = new Response(resp.body, resp);
-  out.headers.set("x-edge-ran", "1");
-  return out;
+  // Non-prod check for Netlify geo function run
+  if ((enriched.env || "") !== "prod") out.headers.set("x-edge-ran", "1");
+
 };
