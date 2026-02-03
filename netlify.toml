@@ -1,3 +1,7 @@
+[build]
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
 [[edge_functions]]
   path = "/.netlify/functions/submit"
   function = "geo-enrich-submit"
