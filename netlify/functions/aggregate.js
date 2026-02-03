@@ -31,8 +31,8 @@ exports.handler = async (event) => {
   }
 
   // ✅ IMPORTANT: set this to the exact tab name in Google Sheets
-  // If your tab is called "Responses", use "Responses"
-  const SHEET_NAME = "Responses";
+  // If your tab is called "responses", use "responses"
+  const SHEET_NAME = "responses";
   const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   try {

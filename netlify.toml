@@ -1,0 +1,7 @@
+[[edge_functions]]
+  path = "/.netlify/functions/submit"
+  function = "geo-enrich-submit"
+
+[[edge_functions]]
+  path = "/.netlify/functions/event"
+  function = "geo-enrich-event"

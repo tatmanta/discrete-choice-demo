@@ -51,6 +51,10 @@ exports.handler = async (event) => {
     referrer,
     page_url,
     user_id,
+    geo_country,
+    geo_region,
+    geo_city,
+    geo_timezone,
   } = body;
 
   // Minimal validation
@@ -116,6 +120,10 @@ exports.handler = async (event) => {
     referrer: referrer || "",
     page_url: page_url || "",
     user_id: user_id || "",
+    geo_country: geo_country || "",
+    geo_region: geo_region || "",
+    geo_city: geo_city || "",
+    geo_timezone: geo_timezone || "",
   };
 
   const writeUrl = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET)}`;
