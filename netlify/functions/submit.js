@@ -55,6 +55,11 @@ exports.handler = async (event) => {
     geo_region,
     geo_city,
     geo_timezone,
+    demo_age,
+    demo_gender,
+    demo_gender_self,
+    demo_education,
+    demo_education_other,
   } = body;
 
   // Minimal validation
@@ -124,6 +129,11 @@ exports.handler = async (event) => {
     geo_region: geo_region || "",
     geo_city: geo_city || "",
     geo_timezone: geo_timezone || "",
+    demo_age: String(demo_age ?? ""),
+    demo_gender: demo_gender || "",
+    demo_gender_self: demo_gender_self || "",
+    demo_education: demo_education || "",
+    demo_education_other: demo_education_other || "",
   };
 
   const writeUrl = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET)}`;

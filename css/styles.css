@@ -419,11 +419,10 @@ td.hoverScenarioCol .scCard{
 /* Selected column */
 td.selectedScenarioCol .scCard{
   border-color: rgba(39,116,174,0.55);
-  box-shadow:
-    0 14px 28px rgba(17,19,24,0.10),
-    0 0 0 2px rgba(39,116,174,0.22);
+  box-shadow: 0 14px 28px rgba(17,19,24,0.10);
   transform: translateY(-1px);
 }
+
 
 /* Dim the unselected column when a selection exists */
 table.scenarioTbl.hasSelection[data-selected="1"] [data-scn="2"] .scCard,
@@ -981,3 +980,170 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
 
   .btn-row > *{ width: 100%; }
 }
+
+/* Demo nav: keep Skip/Next same size */
+.btn-row #demoPrevBtn,
+.btn-row #demoSkipBtn,
+.btn-row #demoNextBtn{
+  min-width: 140px;      /* adjust to taste */
+  justify-content: center;
+}
+
+/* When you toggle visibility in JS, prefer opacity/pointer-events (no layout shift) */
+.btn-row #demoSkipBtn.is-hidden,
+.btn-row #demoNextBtn.is-hidden{
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* Global: make buttons in the bottom nav row consistent */
+.btn-row .btn{
+  min-width: 140px;
+  justify-content: center;
+}
+
+/* ======= Age dial styles ======= */
+
+.demo-form{
+  margin-top: 10px;
+}
+
+.demo-label{
+  display: block;
+  font-weight: 700;
+  margin: 8px 0 8px;
+}
+
+.demo-age-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.demo-number{
+  width: 180px;
+  max-width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.demo-number:focus-visible{
+  box-shadow: 0 0 0 3px var(--ringStrong);
+  border-color: rgba(39,116,174,0.35);
+}
+
+.demo-stepper{
+  display: inline-flex;
+  gap: 8px;
+}
+
+.demo-step{
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+/* Apple-like wheel (visual only) */
+.demo-wheel-wrap{
+  margin-top: 14px;
+  position: relative;
+  width: min(320px, 100%);
+  border-radius: 18px;
+  border: 1px solid var(--border2);
+  background: rgba(17,19,24,0.02);
+  overflow: hidden;
+}
+
+.demo-wheel{
+  padding: 14px 0;
+  text-align: center;
+  user-select: none;
+}
+
+.demo-wheel-item{
+  padding: 10px 0;
+  color: rgba(17,19,24,0.55);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-wheel-item.is-selected{
+  color: var(--text);
+  font-weight: 800;
+}
+
+.demo-wheel-mask{
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.0) 30%),
+    linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.0) 30%);
+  pointer-events: none;
+}
+
+.demo-wheel-focus{
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(39,116,174,0.28);
+  background: rgba(39,116,174,0.06);
+  pointer-events: none;
+}
+
+.demo-hint{
+  text-align: left;
+  margin-top: 8px;
+}
+
+/* ✅ 3) Add these CSS rules to ./css/styles.css */
+
+/* Center the demo question block */
+.demo-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.demo-center-text {
+  text-align: center;
+}
+
+.demo-center-row {
+  justify-content: center;
+}
+
+/* Remove up/down spinners inside number input */
+.demo-number-no-spinners::-webkit-outer-spin-button,
+.demo-number-no-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.demo-number-no-spinners {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: none;
+}
+
+/* whole column focus state (NO rectangles) */
+.focusedScenarioCol{
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+/* optional: show focus using the cards only (no column box) */
+td.focusedScenarioCol .scCard,
+th.focusedScenarioCol .scHeadRadio{
+  box-shadow: 0 0 0 3px var(--ringStrong) !important;
+}
+

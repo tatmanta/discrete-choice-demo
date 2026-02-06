@@ -12,6 +12,38 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./css/styles.css">
+
+  <!-- small UI refinements (safe, scoped) -->
+  <style>
+    /* Make Prev/Next consistent width where you opted-in via .equal-btns */
+    .btn-row.equal-btns { display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
+    .btn-row.equal-btns .btn { min-width: 140px; }
+
+    /* Self-describe block (centered, Apple-clean) */
+    .self-describe-wrap{
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-top: 14px;
+    }
+    .self-describe-wrap .demo-label{
+      width: min(520px, 100%);
+      text-align: left;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .self-describe-input{
+      width: min(520px, 100%);
+      height: 46px;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .self-describe-input::placeholder{
+      color: rgba(17,19,24,0.45);
+    }
+  </style>
 </head>
 
 <body>
@@ -64,18 +96,12 @@
     </div>
   </div>
 
-
-<!-- Helper overlay (Question 1 only) -->
+  <!-- Helper overlay (Question 1 only) -->
   <div id="q1HelpOverlay" class="loading-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="q1HelpTitle" aria-describedby="q1HelpBody">
     <div class="loading-card help-card" role="document">
       <div class="help-head">
         <p class="loading-title" id="q1HelpTitle">How these questions work</p>
-        <button
-          type="button"
-          class="modal-close subtle-close"
-          id="q1HelpCloseX"
-          aria-label="Close"
-        >
+        <button type="button" class="modal-close subtle-close" id="q1HelpCloseX" aria-label="Close">
           <span aria-hidden="true">×</span>
         </button>
       </div>
@@ -94,41 +120,56 @@
     </div>
   </div>
 
-  <script>
+  <!-- Demo (Demographics) info overlay -->
+  <div id="demoInfoOverlay" class="loading-overlay is-hidden"
+       role="dialog" aria-modal="true"
+       aria-labelledby="demoInfoTitle" aria-describedby="demoInfoBody">
+    <div class="loading-card help-card" role="document">
+      <div class="help-head">
+        <p class="loading-title" id="demoInfoTitle">Demographic Section</p>
+        <button type="button" class="modal-close subtle-close" id="demoInfoCloseX" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
 
+      <div class="loading-sub help-body" id="demoInfoBody">
+        <p><b>Thanks for completing the main portion of this survey! You're a three questions away from viewing your results!</b></p>
+        <p>The following demographic questions help ensure the results reflect people like you.</p>
+        <p>Your responses are stored anonymously and are reported only in aggregate.</p>
+        <p>The following questions are optional.</p>
+      </div>
+
+      <div class="cta-row" style="margin-top:14px">
+        <button type="button" class="btn btn-primary" id="demoInfoContinueBtn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     // --- Page head show/hide (for results page) ---
     function showPageHead(){
       const el = document.getElementById("pageHead");
       if (el) el.style.display = "";
     }
-
     function hidePageHead(){
       const el = document.getElementById("pageHead");
       if (el) el.style.display = "none";
-      }
+    }
 
     // --- Always start at top on load (including Safari/Chrome bfcache restores) ---
-      (function forceTopOnLoad(){
-        // stop browser scroll restoration
-        if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    (function forceTopOnLoad(){
+      if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
-        const goTop = () => {
-          window.scrollTo(0, 0);
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        };
+      const goTop = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      };
 
-        // initial paint
-        window.addEventListener("DOMContentLoaded", goTop, { once: true });
-
-        // after all assets (fonts/images) settle
-        window.addEventListener("load", goTop, { once: true });
-
-        // when navigating back to this page from results (bfcache)
-        window.addEventListener("pageshow", (e) => {
-          if (e.persisted) goTop();
-        });
-      })();
+      window.addEventListener("DOMContentLoaded", goTop, { once: true });
+      window.addEventListener("load", goTop, { once: true });
+      window.addEventListener("pageshow", (e) => { if (e.persisted) goTop(); });
+    })();
 
     const blocks = [
       [ [ [0,1,1,1,1], [1,2,0,0,0] ], [ [2,2,1,1,0], [1,0,0,0,1] ], [ [2,0,1,0,1], [0,1,0,1,0] ], [ [1,0,1,1,0], [0,2,0,0,1] ], [ [2,1,1,0,1], [0,2,0,1,0] ], [ [1,1,0,1,0], [2,2,1,0,1] ], [ [2,1,0,0,0], [0,0,1,1,1] ], [ [1,2,1,0,0], [0,1,0,1,1] ] ],
@@ -201,18 +242,27 @@
     let answers = null;
     let submissionInProgress = false;
 
-    // ---- App metadata ----
-    const APP_VERSION = "Geo config 2026-02-03";
-    const ENV = "prod"; // or "staging"
+    let inDemo = false;
+    let demoIndex = 0;
+    const demoAnswers = {
+      age: null,               // number | null
+      gender: null,            // "Male" | "Female" | "Prefer not to say" | null
+      gender_self: "",         // string (optional, always available)
+      education: null,         // "High School Grad" | "Some College" | "College Graduate" | "Advanced Degree" | null
+      education_other: ""      // string (self-describe, optional)
+    };
 
-    // ---- Session + run identifiers ----
+    const DEMO_MIN_AGE = 18;
+    const DEMO_MAX_AGE = 99;
+
+    const APP_VERSION = "Geo config 2026-02-03";
+    const ENV = "prod";
+
     const sessionId = sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
     sessionStorage.setItem("dc_session_id", sessionId);
 
-    // One per survey attempt (reset on Start)
     let clientRunId = null;
 
-    // ---- Persistent user.id field ----
     (function ensureUserId() {
       let user_id = localStorage.getItem("dc_user_id");
       if (!user_id) {
@@ -221,14 +271,12 @@
       }
     })();
 
-    // ---- Loading overlay helpers (GLOBAL; used on submit) ----
     function showSubmitLoading(){
       const el = document.getElementById("submitLoadingOverlay");
       if (!el) return;
       el.classList.remove("is-hidden");
       el.setAttribute("aria-busy","true");
     }
-
     function hideSubmitLoading(){
       const el = document.getElementById("submitLoadingOverlay");
       if (!el) return;
@@ -236,23 +284,20 @@
       el.setAttribute("aria-busy","false");
     }
 
-    // ---- Helper overlay (Question 1 only) ----
     function showQ1HelpOverlay(){
       const el = document.getElementById("q1HelpOverlay");
       if (!el) return;
       el.classList.remove("is-hidden");
-
-      // focus "Got it" for quick dismissal
       const btn = document.getElementById("q1HelpCloseBtn");
       if (btn) btn.focus({ preventScroll: true });
     }
-
     function hideQ1HelpOverlay(){
       const el = document.getElementById("q1HelpOverlay");
       if (!el) return;
       el.classList.add("is-hidden");
     }
 
+    // Single key handler, correct scoping, added focus return to first question
     function wireQ1HelpOverlay(){
       const overlay = document.getElementById("q1HelpOverlay");
       if (!overlay) return;
@@ -262,8 +307,6 @@
 
       const close = () => {
         hideQ1HelpOverlay();
-
-        // return focus to scenario 1 radio (safe default)
         const rb1 = document.getElementById("radioSc1");
         if (rb1) rb1.focus({ preventScroll: true });
       };
@@ -274,20 +317,71 @@
       // click outside card closes
       overlay.addEventListener("click", (e) => {
         if (e.target === overlay) close();
+        e.stopPropagation();
       });
 
-      // Esc closes
-      const escHandler = (e) => {
-        if (e.key === "Escape" && !overlay.classList.contains("is-hidden")) {
+      // ✅ Esc + Enter/Space close + advance ("Got it")
+      const keyHandler = (e) => {
+        if (overlay.classList.contains("is-hidden")) return;
+
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
+
+        if (e.key === "Escape" || isEnter || isSpace) {
           e.preventDefault();
-          close();
+          e.stopPropagation();
+          close(); // same as clicking "Got it"
         }
       };
-      document.addEventListener("keydown", escHandler);
+
+      // avoid stacking multiple listeners if this is called again
+      if (!overlay.dataset.keysWired) {
+        document.addEventListener("keydown", keyHandler);
+        overlay.dataset.keysWired = "1";
+      }
     }
 
+    function showDemoInfoOverlay(){
+      const el = document.getElementById("demoInfoOverlay");
+      if (!el) return;
+      el.classList.remove("is-hidden");
+      const btn = document.getElementById("demoInfoContinueBtn");
+      if (btn) btn.focus({ preventScroll: true });
+    }
+    function hideDemoInfoOverlay(){
+      const el = document.getElementById("demoInfoOverlay");
+      if (!el) return;
+      el.classList.add("is-hidden");
+    }
+    function wireDemoInfoOverlay({ onContinue, onSkip }){
+      const overlay = document.getElementById("demoInfoOverlay");
+      if (!overlay) return;
 
-    // ---- Wiring events fields → Netlify function (SAFE) ----
+      const closeX = document.getElementById("demoInfoCloseX");
+      const btnContinue = document.getElementById("demoInfoContinueBtn");
+      const btnSkip = document.getElementById("demoInfoSkipBtn"); // optional
+
+      const close = () => hideDemoInfoOverlay();
+      const doContinue = () => { close(); onContinue?.(); };
+      const doSkip = () => { close(); onSkip?.(); };
+
+      if (closeX) closeX.onclick = doContinue;
+      if (btnContinue) btnContinue.onclick = doContinue;
+      if (btnSkip) btnSkip.onclick = doSkip;
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) doContinue();
+        e.stopPropagation();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !overlay.classList.contains("is-hidden")) {
+          e.preventDefault();
+          doContinue();
+        }
+      });
+    }
+
     async function logEvent(event_name, event_value = "") {
       try {
         if (!sessionId || !event_name) return;
@@ -318,14 +412,11 @@
       }
     }
 
-    // ---- Dedupe policy (client-side label; server enforces later) ----
     const DEDUPE_WINDOW_MINUTES = 60;
 
-    // ---- Helpers ----
     function safeJsonStringify(val) {
       try { return JSON.stringify(val); } catch { return "null"; }
     }
-
     async function sha256Hex(input) {
       const data = new TextEncoder().encode(String(input));
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -334,10 +425,7 @@
         .join("");
     }
 
-    // ---- scroll management (mobile-safe) ----
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-    }
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
     function scrollToTopInstant() {
       window.scrollTo(0, 0);
@@ -345,7 +433,6 @@
       document.body.scrollTop = 0;
     }
 
-    // ---- Key handlers (attach/detach cleanly) ----
     let introKeyHandler = null;
     let taskKeyHandler = null;
 
@@ -355,7 +442,6 @@
         introKeyHandler = null;
       }
     }
-
     function clearTaskKeyHandler(){
       if (taskKeyHandler) {
         document.removeEventListener('keydown', taskKeyHandler);
@@ -369,94 +455,87 @@
       scrollToTopInstant();
       showPageHead();
 
-      document.getElementById('mainBlock').innerHTML = `
-        <div class="survey-card">
+// --- FIXED renderIntro: correct scoping/braces
+    document.getElementById('mainBlock').innerHTML = `
+      <div class="survey-card">
+        <figure class="intro-hero" aria-label="Survey introduction graphic">
+          <picture>
+            <source srcset="assets/choices graphic landscape.png" type="image/webp">
+            <img
+              src="assets/choices graphic landscape.png"
+              alt="Illustration representing end-of-life values and decision-making"
+              loading="eager"
+              decoding="async"
+              width="1584"
+              height="396"
+            />
+          </picture>
+        </figure>
 
-          <figure class="intro-hero" aria-label="Survey introduction graphic">
-            <picture>
-              <source srcset="assets/choices graphic landscape.png" type="image/webp">
-              <img
-                src="assets/choices graphic landscape.png"
-                alt="Illustration representing end-of-life values and decision-making"
-                loading="eager"
-                decoding="async"
-                width="1584"
-                height="396"
-              />
-            </picture>
-          </figure>
+        <div class="prose">
+          <p>
+            This short research survey asks you to choose between two end-of-life scenarios on each screen.
+            Each choice reflects a trade-off in what matters most to you.
+          </p>
 
-          <div class="prose">
-            <p>
-              You will be asked to consider various scenarios related to end-of-life decisions. Each scenario is designed to
-              highlight the diverse considerations and choices that may arise as one approaches the end of life.
-            </p>
-            <p>
-              We recognize that the subject matter may be sensitive and challenging to contemplate, and we encourage you to
-              engage with each scenario to the best of your ability.
-            </p>
-            <p>
-              Please do your best to select the <strong>scenario</strong> that most closely aligns with your personal beliefs
-              and preferences as there are no right or wrong answers.
-            </p>
-            <p class="fineprint" style="margin-top:12px">
-              Responses may be stored anonymously for research. No names or emails are collected.
-            </p>
-          </div>
+          <p>
+            <strong>Select the scenario you lean toward (Scenario 1 or Scenario 2).</strong>
+            There are no right or wrong answers—only your preferences.
+          </p>
 
-          <div class="cta-row">
-            <button type="button" class="btn btn-primary" id="startBtn">Begin</button>
-          </div>
-
-          <p class="fineprint">
-            <em>Takes less than 5 minutes.</em>
+          <p class="fineprint" style="margin-top:12px">
+            Responses may be stored anonymously for research. No names or emails are collected.
           </p>
         </div>
-      `;
 
-      const startBtn = document.getElementById('startBtn');
+        <div class="cta-row">
+          <button type="button" class="btn btn-primary" id="startBtn">Begin</button>
+        </div>
 
-      
-      function startSurvey() {
-        // ---- IDs for dedupe + session tracking ----
-        clientRunId = crypto.randomUUID();
-        sessionStorage.setItem("dc_client_run_id", clientRunId);
+        <p class="fineprint"><em>Takes less than 5 minutes.</em></p>
+      </div>
+    `;
 
-        // Clear prior results so "Back" doesn't resurrect stale state
-        sessionStorage.removeItem("dc_results_personaIndex");
-        sessionStorage.removeItem("dc_results_personaName");
-        sessionStorage.removeItem("dc_results_valueType");
-        sessionStorage.removeItem("dc_results_desc");
+    const startBtn = document.getElementById('startBtn');
 
-        // ---- Assign randomized block + initialize answers ----
-        blockIndex = Math.floor(Math.random() * blocks.length);
-        assignedBlock = blocks[blockIndex];
-        answers = Array(assignedBlock.length).fill(null);
+    function startSurvey() {
+      clientRunId = crypto.randomUUID();
+      sessionStorage.setItem("dc_client_run_id", clientRunId);
 
-        logEvent("survey_start", `blockIndex=${blockIndex}`);
+      sessionStorage.removeItem("dc_results_personaIndex");
+      sessionStorage.removeItem("dc_results_personaName");
+      sessionStorage.removeItem("dc_results_valueType");
+      sessionStorage.removeItem("dc_results_desc");
 
-        showTask(0);
-      }
+      blockIndex = Math.floor(Math.random() * blocks.length);
+      assignedBlock = blocks[blockIndex];
+      answers = Array(assignedBlock.length).fill(null);
 
-      startBtn.onclick = startSurvey;
-      startBtn.focus({ preventScroll: true });
-
-      // ✅ Space / Enter starts survey on intro (anywhere, unless typing/clicking controls)
-      introKeyHandler = (e) => {
-        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-        if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
-
-        const isSpace = (e.code === "Space" || e.key === " ");
-        const isEnter = (e.key === "Enter");
-
-        if (isSpace || isEnter) {
-          e.preventDefault(); // prevent scroll on Space
-          startSurvey();
-        }
-      };
-      document.addEventListener('keydown', introKeyHandler);
+      logEvent("survey_start", `blockIndex=${blockIndex}`);
+      showTask(0);
     }
 
+    startBtn.onclick = startSurvey;
+    startBtn.focus({ preventScroll: true });
+
+    introKeyHandler = (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a") return;
+
+      const isSpace = (e.code === "Space" || e.key === " ");
+      const isEnter = (e.key === "Enter");
+
+      if (isSpace || isEnter) {
+        e.preventDefault();
+        startSurvey();
+      }
+    };
+    document.addEventListener('keydown', introKeyHandler);
+
+    }
+
+
+    // ✅ FIXED showTask: single taskKeyHandler, single saveAndNext, correct scoping/braces
     function showTask(idx) {
       clearTaskKeyHandler();
       clearIntroKeyHandler();
@@ -485,77 +564,77 @@
 
           <div class="table-wrap" role="region" aria-label="Scenarios table">
             <table class="scenarioTbl" id="scenarioTbl" aria-label="Scenario choice">
-            <colgroup>
-              <col style="width:48%">
-              <col style="width:4%">
-              <col style="width:48%">
-            </colgroup>
+              <colgroup>
+                <col style="width:48%">
+                <col style="width:4%">
+                <col style="width:48%">
+              </colgroup>
 
-            <thead>
-              <tr>
-                <th scope="col" class="centered scHead sc1head" data-scn="1">
-                  <label class="scHeadRadio">
-                    <input
-                      type="radio"
-                      name="rb"
-                      value="Option 1"
-                      id="radioSc1"
-                      ${answers[idx] === "Option 1" ? "checked" : ""}
-                    >
-                    <span>Scenario 1</span>
-                  </label>
-                </th>
-
-                <th class="orHead" aria-hidden="true"></th>
-
-                <th scope="col" class="centered scHead sc2head" data-scn="2">
-                  <label class="scHeadRadio">
-                    <input
-                      type="radio"
-                      name="rb"
-                      value="Option 2"
-                      id="radioSc2"
-                      ${answers[idx] === "Option 2" ? "checked" : ""}
-                    >
-                    <span>Scenario 2</span>
-                  </label>
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              ${attributes.map((attr, i) => `
+              <thead>
                 <tr>
-                  <td class="scCell sc1col" data-scn="1" role="button" aria-label="Select Scenario 1">
-                    <div class="scCard">
-                      <span class="sr-only">${attr.name}: </span>${attr.levels[profileA[i]]}
-                    </div>
-                  </td>
+                  <th scope="col" class="centered scHead sc1head" data-scn="1">
+                    <label class="scHeadRadio">
+                      <input
+                        type="radio"
+                        name="rb"
+                        value="Option 1"
+                        id="radioSc1"
+                        ${answers[idx] === "Option 1" ? "checked" : ""}
+                      >
+                      <span>Scenario 1</span>
+                    </label>
+                  </th>
 
-                  <td class="orCell" aria-hidden="true">
-                    <span class="orBadge">OR</span>
-                  </td>
+                  <th class="orHead" aria-hidden="true"></th>
 
-                  <td class="scCell sc2col" data-scn="2" role="button" aria-label="Select Scenario 2">
-                    <div class="scCard">
-                      <span class="sr-only">${attr.name}: </span>${attr.levels[profileB[i]]}
-                    </div>
-                  </td>
+                  <th scope="col" class="centered scHead sc2head" data-scn="2">
+                    <label class="scHeadRadio">
+                      <input
+                        type="radio"
+                        name="rb"
+                        value="Option 2"
+                        id="radioSc2"
+                        ${answers[idx] === "Option 2" ? "checked" : ""}
+                      >
+                      <span>Scenario 2</span>
+                    </label>
+                  </th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>           
+              </thead>
+
+              <tbody>
+                ${attributes.map((attr, i) => `
+                  <tr>
+                    <td class="scCell sc1col" data-scn="1" role="button" tabindex="-1" aria-label="Select Scenario 1">
+                      <div class="scCard">
+                        <span class="sr-only">${attr.name}: </span>${attr.levels[profileA[i]]}
+                      </div>
+                    </td>
+
+                    <td class="orCell" aria-hidden="true">
+                      <span class="orBadge">OR</span>
+                    </td>
+
+                    <td class="scCell sc2col" data-scn="2" role="button" tabindex="-1" aria-label="Select Scenario 2">
+                      <div class="scCard">
+                        <span class="sr-only">${attr.name}: </span>${attr.levels[profileB[i]]}
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
 
-          <div class="btn-row">
-            ${idx>0
+          <div class="btn-row equal-btns">
+            ${idx > 0
               ? `<button type="button" class="btn btn-ghost" id="prevBtn">Previous</button>`
               : `<button type="button" class="btn btn-ghost" id="backBtn">Back</button>`
             }
 
-            ${idx<assignedBlock.length-1
+            ${idx < assignedBlock.length - 1
               ? `<button type="button" class="btn btn-primary" id="nextBtn">Next</button>`
-              : `<button type="button" class="btn btn-primary" id="submitBtn">Submit</button>`
+              : `<button type="button" class="btn btn-primary" id="toDemoBtn">Next</button>`
             }
           </div>
         </div>
@@ -565,30 +644,26 @@
       const rb1 = document.getElementById('radioSc1');
       const rb2 = document.getElementById('radioSc2');
 
+      // ✅ single state var (no redeclare)
+      let lastCommitScenario = null;
+
       function updateColHighlight(scenarioNum) {
-        // clear cell highlights
         table.querySelectorAll('.selectedScenarioCol').forEach(el => el.classList.remove('selectedScenarioCol'));
         table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('selectedScenarioCol'));
 
-        // NEW: table-level state (for dimming + styling)
+        table.querySelectorAll(`[data-scn="${scenarioNum}"]`).forEach(el => el.classList.add('focusedScenarioCol'));
+
         table.classList.add('hasSelection');
         table.dataset.selected = String(scenarioNum);
       }
 
-// ---- Show helper overlay ONLY on the first question, once per run ----
+      // helper overlay only once per run
       if (idx === 0) {
         const helpKey = `dc_q1_help_shown_${clientRunId || sessionStorage.getItem("dc_client_run_id") || ""}`;
-
         if (!sessionStorage.getItem(helpKey)) {
           sessionStorage.setItem(helpKey, "1");
-
-          // wire once (safe even if called multiple times)
           wireQ1HelpOverlay();
-
-          // open after a frame so layout paints first
-          requestAnimationFrame(() => {
-            showQ1HelpOverlay();
-          });
+          requestAnimationFrame(() => showQ1HelpOverlay());
         }
       }
 
@@ -613,16 +688,80 @@
         if (scenarioNum === 2) rb2.checked = true;
 
         updateColHighlight(scenarioNum);
+        lastCommitScenario = scenarioNum;
 
         if (focusNext) {
-          const nextBtn = document.getElementById('nextBtn') || document.getElementById('submitBtn');
-          if (nextBtn) nextBtn.focus();
+          const nextBtn =
+            document.getElementById('nextBtn') ||
+            document.getElementById('toDemoBtn');
+          if (nextBtn) nextBtn.focus({ preventScroll: true });
         }
       }
 
-      const initial = selectedScenario();
-      if (initial) updateColHighlight(initial);
+      function saveAndNext(direction) {
+        // go back without requiring a selection
+        if (direction < 0) {
+          showTask(currentTask + direction);
+          return;
+        }
 
+        // forward requires selection
+        const choice = document.querySelector('input[name="rb"]:checked');
+        if (!choice) {
+          alert("Please select Scenario 1 or Scenario 2 before continuing.");
+          return;
+        }
+
+        answers[currentTask] = choice.value;
+        logEvent("question_answered", `q=${currentTask + 1}|choice=${choice.value}`);
+
+        // last DCE -> demo
+        if (idx === assignedBlock.length - 1) {
+          inDemo = true;
+          demoIndex = 0;
+
+          const gateKey = `dc_demo_info_shown_${clientRunId || sessionStorage.getItem("dc_client_run_id") || ""}`;
+          const showGate = !sessionStorage.getItem(gateKey);
+
+          const startDemo = () => showDemo(0);
+
+          if (showGate) {
+            sessionStorage.setItem(gateKey, "1");
+
+            wireDemoInfoOverlay({
+              onContinue: () => startDemo(),
+              onSkip: () => {
+                logEvent("demo_skipped", "user_skipped_demo_block");
+                startDemo(); // or submitSurvey() if you want to bypass demos entirely
+              }
+            });
+
+            requestAnimationFrame(() => showDemoInfoOverlay());
+          } else {
+            startDemo();
+          }
+          return;
+        }
+
+        showTask(currentTask + direction);
+      }
+
+      // button wiring
+      if (idx === 0) {
+        const backBtn = document.getElementById('backBtn');
+        if (backBtn) backBtn.onclick = renderIntro;
+      } else {
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) prevBtn.onclick = () => saveAndNext(-1);
+      }
+
+      const nextBtn = document.getElementById('nextBtn');
+      if (nextBtn) nextBtn.onclick = () => saveAndNext(1);
+
+      const toDemoBtn = document.getElementById('toDemoBtn');
+      if (toDemoBtn) toDemoBtn.onclick = () => saveAndNext(1);
+
+      // click on cells
       table.querySelectorAll('[data-scn="1"]').forEach(el => {
         el.addEventListener('click', (e) => {
           if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return;
@@ -641,6 +780,7 @@
         el.addEventListener('mouseleave', () => setHover(2, false));
       });
 
+      // radio change/focus styling
       rb1.addEventListener('change', () => selectScenario(1));
       rb2.addEventListener('change', () => selectScenario(2));
 
@@ -649,104 +789,570 @@
       rb2.addEventListener('focus', () => focusCol(2, true));
       rb2.addEventListener('blur',  () => focusCol(2, false));
 
+      // initial highlight
+      const initial = selectedScenario();
+      if (initial) updateColHighlight(initial);
+
+      // initial focus
+      requestAnimationFrame(() => {
+        if (rb2?.checked) rb2.focus({ preventScroll: true });
+        else rb1?.focus({ preventScroll: true });
+      });
+
+      // ✅ single keyboard handler attached once
       taskKeyHandler = (e) => {
-        const wrapNow = document.querySelector('.table-wrap');
-        if (!wrapNow) return;
+        // Block when overlays are open
+        const q1El = document.getElementById("q1HelpOverlay");
+        const demoEl = document.getElementById("demoInfoOverlay");
+        const modalOpen =
+          (q1El && !q1El.classList.contains("is-hidden")) ||
+          (demoEl && !demoEl.classList.contains("is-hidden"));
+        if (modalOpen) return;
 
-        if (!wrapNow.contains(document.activeElement)) return;
+        // Only on task screens
+        if (!document.getElementById("scenarioTbl")) return;
 
-        const activeEl = document.activeElement;
-        const isRadioFocus = (activeEl === rb1 || activeEl === rb2);
+        // Don't hijack typing fields
+        const t = e.target;
+        const tag = t?.tagName ? t.tagName.toLowerCase() : "";
+        if (tag === "textarea" || tag === "select") return;
+        if (tag === "input" && t.type !== "radio") return;
 
-        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-        if (!isRadioFocus && (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || tag === "a")) return;
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
 
-        const focusScenario = (n) => {
-          setHover(1, false);
-          setHover(2, false);
-          setHover(n, true);
-          (n === 1 ? rb1 : rb2).focus();
+        const sel = () => (rb1?.checked ? 1 : rb2?.checked ? 2 : null);
+
+        const focusedScenario = () => {
+          const ae = document.activeElement;
+          const ds = ae?.dataset?.scn;
+          if (ds === "1" || ds === "2") return Number(ds);
+          if (ae === rb2) return 2;
+          if (ae === rb1) return 1;
+          return sel() ?? 1;
         };
 
-        const focusedScenario = () => (document.activeElement === rb2 ? 2 : 1);
+        const focusScenario = (n) => (n === 1 ? rb1 : rb2)?.focus({ preventScroll: true });
 
+        // Arrow keys to select and move focus
         if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
           e.preventDefault();
+          e.stopPropagation();
+          selectScenario(1);
           focusScenario(1);
+          lastCommitScenario = null;
           return;
         }
 
         if (e.key === "ArrowRight" || e.key === "ArrowDown") {
           e.preventDefault();
+          e.stopPropagation();
+          selectScenario(2);
           focusScenario(2);
-          return;
-        }
-
-        const isSpace = (e.code === "Space" || e.key === " ");
-        const isEnter = (e.key === "Enter");
-
-        if (isSpace || isEnter) {
-          e.preventDefault();
-          const n = focusedScenario();
-          selectScenario(n, { focusNext: true });
+          lastCommitScenario = null;
           return;
         }
 
         if (e.key === "1" || e.key === "2") {
           e.preventDefault();
           const n = Number(e.key);
-          focusScenario(n);
-          selectScenario(n, { focusNext: true });
+          const cur = sel();
+
+          if (!cur || cur !== n) { selectScenario(n); return; }
+          if (lastCommitScenario === n) saveAndNext(1);
+          else lastCommitScenario = n;
           return;
+        }
+
+        if (isSpace || isEnter) {
+          e.preventDefault();
+          const focus = focusedScenario();
+          const cur = sel();
+
+          if (!cur || cur !== focus) { selectScenario(focus); return; }
+          if (lastCommitScenario === focus) saveAndNext(1);
+          else lastCommitScenario = focus;
         }
       };
 
       document.addEventListener("keydown", taskKeyHandler);
-
-      if (rb1 && rb2) (rb1.checked ? rb1 : rb2.checked ? rb2 : rb1).focus();
-
-      requestAnimationFrame(() => scrollToTopInstant());
-
-      if (idx === 0) {
-        document.getElementById('backBtn').onclick = renderIntro;
-      } else {
-        document.getElementById('prevBtn').onclick = () => saveAndNext(-1);
-      }
-
-      if (idx < assignedBlock.length - 1) {
-        document.getElementById('nextBtn').onclick = () => saveAndNext(1);
-      } else {
-        document.getElementById('submitBtn').onclick = function() {
-          this.disabled = true;
-          submitSurvey();
-        };
-      }
     }
 
-    function saveAndNext(direction) {
-      if (direction < 0) {
-        showTask(currentTask + direction);
-        return;
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    // ✅ FIXED showDemo: single key handler, correct scoping/braces, added focus to first input
+    function showDemo(idx){
+      clearTaskKeyHandler();
+      clearIntroKeyHandler();
+      scrollToTopInstant();
+      hidePageHead();
+
+      demoIndex = idx;
+
+      if (idx === 0) return renderDemoAge();
+      if (idx === 1) return renderDemoGender();
+      if (idx === 2) return renderDemoEducation();
+
+      // done with demos -> submit
+      finalizeSubmit();
+    }
+
+    function renderDemoAge(){
+      const totalSteps = assignedBlock.length + 3;
+      const stepNum = assignedBlock.length + 1;
+      const progressPct = Math.round((stepNum / totalSteps) * 100);
+
+      const ageVal = (demoAnswers.age === null || demoAnswers.age === undefined) ? "" : String(demoAnswers.age);
+
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card demo-center">
+          <div class="task-head">
+            <div class="task-meta demo-center-text">
+              <span class="task-count">About you (optional) · 1 of 3</span>
+              <span class="task-prompt">What is your age?</span>
+            </div>
+            <div class="progress" aria-label="Progress">
+              <div class="progress-bar" style="width:${progressPct}%"></div>
+            </div>
+          </div>
+
+          <div class="demo-form demo-center-text">
+            <label class="demo-label" for="ageInput">Age (years)</label>
+
+            <div class="demo-age-row demo-center-row">
+              <input
+                id="ageInput"
+                class="demo-number demo-number-no-spinners"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                value="${ageVal}"
+                aria-describedby="ageHint ageErr"
+                aria-label="Age in years (optional)"
+                placeholder="e.g., 40"
+                autocomplete="off"
+              />
+
+              <div class="demo-stepper">
+                <button type="button" class="btn demo-step" id="ageDec" aria-label="Decrease age">−</button>
+                <button type="button" class="btn demo-step" id="ageInc" aria-label="Increase age">+</button>
+              </div>
+            </div>
+
+            <p class="fineprint" id="ageErr" style="display:none; text-align:left; margin-top:6px;">
+              Please enter an age between ${DEMO_MIN_AGE} and ${DEMO_MAX_AGE}.
+            </p>
+          </div>
+
+          <div class="btn-row equal-btns">
+            <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
+            <button type="button" class="btn btn-ghost" id="demoSkipBtn">Skip</button>
+            <button type="button" class="btn btn-primary" id="demoNextBtn">Next</button>
+          </div>
+        </div>
+      `;
+
+      const ageInput = document.getElementById("ageInput");
+      const ageDec   = document.getElementById("ageDec");
+      const ageInc   = document.getElementById("ageInc");
+      const ageErr   = document.getElementById("ageErr");
+      const btnPrev  = document.getElementById("demoPrevBtn");
+      const btnSkip  = document.getElementById("demoSkipBtn");
+      const btnNext  = document.getElementById("demoNextBtn");
+
+      const showErr = (on) => { if (ageErr) ageErr.style.display = on ? "" : "none"; };
+
+      function parseAgeOrNull(){
+        const raw = (ageInput.value || "").trim();
+        if (raw === "") return null;
+
+        const n = Number(raw);
+        if (!Number.isFinite(n)) return "__invalid__";
+        if (n < DEMO_MIN_AGE || n > DEMO_MAX_AGE) return "__invalid__";
+        return Math.round(n);
       }
 
-      const choice = document.querySelector('input[name="rb"]:checked');
-      if (!choice) {
-        alert("Please select Scenario 1 or Scenario 2 before continuing.");
-        return;
+      function setAge(nextAge){
+        if (nextAge === null) {
+          demoAnswers.age = null;
+          ageInput.value = "";
+          showErr(false);
+          updateCtas();
+          return;
+        }
+        const a = clamp(Number(nextAge), DEMO_MIN_AGE, DEMO_MAX_AGE);
+        demoAnswers.age = a;
+        ageInput.value = String(a);
+        showErr(false);
+        updateCtas();
       }
-      answers[currentTask] = choice.value;
 
-      logEvent("question_answered", `q=${currentTask + 1}|choice=${choice.value}`);
+      function setHidden(el, hidden){
+        if (!el) return;
+        el.classList.toggle("is-hidden", !!hidden);
+      }
 
-      showTask(currentTask + direction);
+      function updateCtas(){
+        const v = parseAgeOrNull();
+        showErr(v === "__invalid__");
+
+        const isBlank = (v === null);
+        const isValid = (typeof v === "number");
+
+        if (btnSkip) btnSkip.style.display = isBlank ? "" : "none";
+        if (btnNext) btnNext.style.display = isValid ? "" : "none";
+
+        setHidden(btnSkip, !isBlank);
+        setHidden(btnNext, !isValid);
+      }
+
+      updateCtas();
+
+      ageInput.addEventListener("input", updateCtas);
+      ageInput.addEventListener("blur", updateCtas);
+
+      ageInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (btnNext && btnNext.style.display !== "none") btnNext.click();
+          return;
+        }
+        if (e.key === "ArrowUp")   { e.preventDefault(); ageInc.click(); return; }
+        if (e.key === "ArrowDown") { e.preventDefault(); ageDec.click(); return; }
+      });
+
+      ageDec.onclick = () => {
+        const cur = parseAgeOrNull();
+        if (cur === null || cur === "__invalid__") return setAge(DEMO_MIN_AGE);
+        setAge(cur - 1);
+      };
+      ageInc.onclick = () => {
+        const cur = parseAgeOrNull();
+        if (cur === null || cur === "__invalid__") return setAge(DEMO_MIN_AGE);
+        setAge(cur + 1);
+      };
+
+      if (btnPrev) {
+        btnPrev.onclick = () => {
+          inDemo = false;
+          showTask(assignedBlock.length - 1);
+        };
+      }
+
+      if (btnSkip) {
+        btnSkip.onclick = () => {
+          demoAnswers.age = null;
+          ageInput.value = "";
+          showErr(false);
+          updateCtas();
+          logEvent("demo_skipped_field", "age");
+          showDemo(1);
+        };
+      }
+
+      if (btnNext) {
+        btnNext.onclick = () => {
+          const v = parseAgeOrNull();
+          if (v === "__invalid__" || v === null) {
+            updateCtas();
+            ageInput.focus({ preventScroll: true });
+            return;
+          }
+          demoAnswers.age = v;
+          logEvent("demo_answered", `age=${v}`);
+          showDemo(1);
+        };
+      }
+
+      ageInput.focus({ preventScroll: true });
+    }
+
+    // ✅ UPDATED renderDemoGender: removed "Prefer to Self Describe" radio; always show centered self-describe input
+    function renderDemoGender(){
+      const totalSteps = assignedBlock.length + 3;
+      const stepNum = assignedBlock.length + 2;
+      const progressPct = Math.round((stepNum / totalSteps) * 100);
+
+      const options = ["Male", "Female", "Prefer not to say"];
+      const selected = demoAnswers.gender;
+
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card demo-center">
+          <div class="task-head">
+            <div class="task-meta demo-center-text">
+              <span class="task-count">About you (optional) · 2 of 3</span>
+              <span class="task-prompt">Gender</span>
+            </div>
+            <div class="progress" aria-label="Progress">
+              <div class="progress-bar" style="width:${progressPct}%"></div>
+            </div>
+          </div>
+
+          <div class="demo-form demo-center-text">
+            <fieldset style="border:0;padding:0;margin:0; width:100%;">
+              <legend class="demo-label" style="margin-bottom:10px">Select one (optional)</legend>
+
+              <div style="width:min(520px,100%); margin:0 auto; text-align:left;">
+                ${options.map((opt) => `
+                  <label class="scHeadRadio" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0">
+                    <input type="radio" name="demoGender" value="${opt}" ${selected === opt ? "checked" : ""} />
+                    <span>${opt}</span>
+                  </label>
+                `).join("")}
+              </div>
+
+              <div class="demo-form demo-center-text">
+                <input
+                  id="genderSelf"
+                  class="demo-number self-describe-input"
+                  type="text"
+                  value="${(demoAnswers.gender_self || "").replace(/"/g, "&quot;")}"
+                  placeholder="Self-describe (optional)"
+                  autocomplete="off"
+                />
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="btn-row equal-btns">
+            <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
+            <button type="button" class="btn btn-ghost" id="demoSkipBtn">Skip</button>
+            <button type="button" class="btn btn-primary" id="demoNextBtn">Next</button>
+          </div>
+        </div>
+      `;
+
+      const self = document.getElementById("genderSelf");
+
+      const readSelection = () =>
+        document.querySelector('input[name="demoGender"]:checked')?.value ?? null;
+
+      document.querySelectorAll('input[name="demoGender"]').forEach(rb => {
+        rb.addEventListener("change", () => {
+          demoAnswers.gender = readSelection();
+        });
+      });
+
+      if (self) {
+        self.addEventListener("input", () => {
+          demoAnswers.gender_self = self.value || "";
+        });
+      }
+
+      document.getElementById("demoPrevBtn").onclick = () => showDemo(0);
+
+      document.getElementById("demoSkipBtn").onclick = () => {
+        demoAnswers.gender = null;
+        demoAnswers.gender_self = "";
+        logEvent("demo_skipped_field", "gender");
+        showDemo(2);
+      };
+
+      document.getElementById("demoNextBtn").onclick = () => {
+        demoAnswers.gender = readSelection();
+        demoAnswers.gender_self = String(demoAnswers.gender_self || "").trim();
+        logEvent("demo_answered", `gender=${demoAnswers.gender || ""}|gender_self=${demoAnswers.gender_self}`);
+        showDemo(2);
+      };
+
+      requestAnimationFrame(() => {
+        const checked = document.querySelector('input[name="demoGender"]:checked');
+        (checked || document.querySelector('input[name="demoGender"]'))?.focus({ preventScroll: true });
+      });
+    }
+      // ✅ UPDATED renderDemoEducation: removed "Other" radio; always show centered self-describe input; correct scoping/braces
+      function renderDemoEducation(){
+        const totalSteps = assignedBlock.length + 3;
+        const stepNum = assignedBlock.length + 3;
+        const progressPct = Math.round((stepNum / totalSteps) * 100);
+
+        // ✅ remove "Other" option; always show self-describe field (like gender)
+        const options = ["High School Grad", "Some College", "College Graduate", "Advanced Degree"];
+        const selected = demoAnswers.education;
+
+        document.getElementById('mainBlock').innerHTML = `
+          <div class="survey-card demo-center">
+            <div class="task-head">
+              <div class="task-meta demo-center-text">
+                <span class="task-count">About you (optional) · 3 of 3</span>
+                <span class="task-prompt">Education</span>
+              </div>
+              <div class="progress" aria-label="Progress">
+                <div class="progress-bar" style="width:${progressPct}%"></div>
+              </div>
+            </div>
+
+            <div class="demo-form demo-center-text">
+              <fieldset style="border:0;padding:0;margin:0; width:100%;">
+                <legend class="demo-label" style="margin-bottom:10px">Select one (optional)</legend>
+
+                <div style="width:min(520px,100%); margin:0 auto; text-align:left;">
+                  ${options.map((opt) => `
+                    <label class="scHeadRadio" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0">
+                      <input type="radio" name="demoEdu" value="${opt}" ${selected === opt ? "checked" : ""} />
+                      <span>${opt}</span>
+                    </label>
+                  `).join("")}
+                </div>
+
+                <div class="demo-form demo-center-text">
+                  <input
+                    id="eduSelf"
+                    class="demo-number self-describe-input"
+                    type="text"
+                    value="${(demoAnswers.education_other || "").replace(/"/g, "&quot;")}"
+                    placeholder="Self-describe (optional)"
+                    autocomplete="off"
+                  />
+                </div>
+              </fieldset>
+            </div>
+
+            <div class="btn-row equal-btns">
+              <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
+              <button type="button" class="btn btn-ghost" id="demoSkipBtn">Skip</button>
+              <button type="button" class="btn btn-primary" id="demoNextBtn">Finish</button>
+            </div>
+          </div>
+        `;
+
+        const self = document.getElementById("eduSelf");
+
+        const readSelection = () =>
+          document.querySelector('input[name="demoEdu"]:checked')?.value ?? null;
+
+        document.querySelectorAll('input[name="demoEdu"]').forEach(rb => {
+          rb.addEventListener("change", () => {
+            demoAnswers.education = readSelection();
+          });
+        });
+
+        if (self) {
+          self.addEventListener("input", () => {
+            demoAnswers.education_other = self.value || "";
+          });
+        }
+
+        document.getElementById("demoPrevBtn").onclick = () => showDemo(1);
+
+        document.getElementById("demoSkipBtn").onclick = () => {
+          demoAnswers.education = null;
+          demoAnswers.education_other = "";
+          logEvent("demo_skipped_field", "education");
+          finalizeSubmit();
+        };
+
+        document.getElementById("demoNextBtn").onclick = () => {
+          demoAnswers.education = readSelection();
+          demoAnswers.education_other = String(demoAnswers.education_other || "").trim();
+          logEvent("demo_answered", `education=${demoAnswers.education || ""}|education_other=${demoAnswers.education_other}`);
+          finalizeSubmit();
+        };
+
+        requestAnimationFrame(() => {
+          const checked = document.querySelector('input[name="demoEdu"]:checked');
+          (checked || document.querySelector('input[name="demoEdu"]'))?.focus({ preventScroll: true });
+        });
+      }
+
+
+    // ✅ Submit that includes demo fields (and doesn't require any on-screen radio)
+    async function finalizeSubmit() {
+      if (submissionInProgress) return;
+      submissionInProgress = true;
+
+      showSubmitLoading();
+      await new Promise(r => requestAnimationFrame(r));
+
+      let attrScores = Array(attributes.length).fill(0);
+      assignedBlock.forEach((task, t) => {
+        const [option1, option2] = task;
+        const chosen = answers[t]==="Option 1" ? option1 : option2;
+        const other  = answers[t]==="Option 1" ? option2 : option1;
+        for (let i=0; i<attributes.length; i++) {
+          if (chosen[i] > other[i]) attrScores[i]++;
+        }
+      });
+
+      const maxScore = Math.max(...attrScores);
+      const importantAttrIndex = attrScores.findIndex(s => s === maxScore);
+
+      sessionStorage.setItem("dc_results_personaIndex", String(importantAttrIndex));
+      sessionStorage.setItem("dc_results_personaName", personaInfo[importantAttrIndex].name);
+      sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
+      sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
+
+      logEvent("survey_submit", `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`);
+
+      if (!clientRunId) {
+        clientRunId = sessionStorage.getItem("dc_client_run_id") || crypto.randomUUID();
+        sessionStorage.setItem("dc_client_run_id", clientRunId);
+      }
+
+      const answersJson = safeJsonStringify(answers);
+      const attrScoresJson = safeJsonStringify(attrScores);
+
+      let dedupeKey = "";
+      try {
+        dedupeKey = await sha256Hex([APP_VERSION, blockIndex, answersJson].join("|"));
+      } catch (e) {
+        dedupeKey = [APP_VERSION, blockIndex, clientRunId].join("|");
+      }
+
+      // Normalize demo fields (trim text, keep blanks blank)
+      const genderSelf = String(demoAnswers.gender_self || "").trim();
+      const eduOther = (demoAnswers.education === "Other")
+        ? String(demoAnswers.education_other || "").trim()
+        : "";
+
+      const payload = {
+        app_version: APP_VERSION,
+        env: ENV,
+        user_id: localStorage.getItem("dc_user_id") || "",
+        session_id: sessionId,
+        client_run_id: clientRunId,
+        dedupe_key: dedupeKey,
+        dedupe_window_minutes: DEDUPE_WINDOW_MINUTES,
+
+        block_index: blockIndex,
+        n_questions: assignedBlock.length,
+        answers_json: answersJson,
+        attr_scores_json: attrScoresJson,
+        winner_attr_index: importantAttrIndex,
+        winner_value_type: personaInfo[importantAttrIndex].value,
+        winner_persona_name: personaInfo[importantAttrIndex].name,
+
+        // demographics (optional)
+        demo_age: (demoAnswers.age === null || demoAnswers.age === undefined) ? "" : String(demoAnswers.age),
+        demo_gender: demoAnswers.gender || "",
+        demo_gender_self: genderSelf,
+        demo_education: demoAnswers.education || "",
+        demo_education_other: eduOther,
+
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+        language: navigator.language || "",
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || "",
+        page_url: window.location.href
+      };
+
+      try {
+        await fetch("/.netlify/functions/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: safeJsonStringify(payload)
+        });
+      } catch (e) {
+        console.warn("Logging failed; continuing", e);
+      }
+
+      window.location.href = "./results.html";
     }
 
     async function submitSurvey() {
       if (submissionInProgress) return;
       submissionInProgress = true;
 
-      // ✅ STEP 4: show loading overlay immediately on submit click
-      // and yield one frame so the browser can paint it before heavy work / navigation
       showSubmitLoading();
       await new Promise(r => requestAnimationFrame(r));
 
@@ -777,10 +1383,7 @@
       sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
       sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
 
-      logEvent(
-        "survey_submit",
-        `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`
-      );
+      logEvent("survey_submit", `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`);
 
       if (!clientRunId) {
         clientRunId = sessionStorage.getItem("dc_client_run_id") || crypto.randomUUID();
@@ -835,9 +1438,7 @@
     function init() {
       renderIntro();
     }
-
     init();
   </script>
-
 </body>
 </html>
