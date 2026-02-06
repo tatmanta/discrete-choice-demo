@@ -133,10 +133,10 @@
       </div>
 
       <div class="loading-sub help-body" id="demoInfoBody">
-        <p><b>Thanks for completing the main portion of this survey! You're a three questions away from viewing your results!</b></p>
+        <p><b>Thanks for completing the main portion of this survey! You're three questions away from viewing your results.</b></p>
         <p>The following demographic questions help ensure the results reflect people like you.</p>
         <p>Your responses are stored anonymously and are reported only in aggregate.</p>
-        <p>The following questions are optional.</p>
+        <p><i>The following questions are optional.</i></p>
       </div>
 
       <div class="cta-row" style="margin-top:14px">
@@ -248,7 +248,7 @@
       age: null,               // number | null
       gender: null,            // "Male" | "Female" | "Prefer not to say" | null
       gender_self: "",         // string (optional, always available)
-      education: null,         // "High School Grad" | "Some College" | "College Graduate" | "Advanced Degree" | null
+      education: null,         // "High School Grad" | "Some College" | "College Grad" | "Advanced Degree" | null
       education_other: ""      // string (self-describe, optional)
     };
 
@@ -1169,7 +1169,7 @@
         const progressPct = Math.round((stepNum / totalSteps) * 100);
 
         // ✅ remove "Other" option; always show self-describe field (like gender)
-        const options = ["High School Grad", "Some College", "College Graduate", "Advanced Degree"];
+        const options = ["High School Grad", "Some College", "College Grad", "Advanced Degree"];
         const selected = demoAnswers.education;
 
         document.getElementById('mainBlock').innerHTML = `
