@@ -435,6 +435,7 @@
 
     let introKeyHandler = null;
     let taskKeyHandler = null;
+    let demoKeyHandler = null;
 
     function clearIntroKeyHandler(){
       if (introKeyHandler) {
@@ -448,6 +449,13 @@
         taskKeyHandler = null;
       }
     }
+
+    function clearDemoKeyHandler(){
+        if (demoKeyHandler) {
+          document.removeEventListener("keydown", demoKeyHandler);
+          demoKeyHandler = null;
+        }
+      }
 
     function renderIntro(){
       clearTaskKeyHandler();
@@ -886,6 +894,7 @@
     function showDemo(idx){
       clearTaskKeyHandler();
       clearIntroKeyHandler();
+      clearDemoKeyHandler();
       scrollToTopInstant();
       hidePageHead();
 
@@ -1161,6 +1170,41 @@
         const checked = document.querySelector('input[name="demoGender"]:checked');
         (checked || document.querySelector('input[name="demoGender"]'))?.focus({ preventScroll: true });
       });
+    
+    // ✅ Space/Enter to advance on demos (Gender)
+        clearDemoKeyHandler();
+        demoKeyHandler = (e) => {
+          const isSpace = (e.code === "Space" || e.key === " ");
+          const isEnter = (e.key === "Enter");
+          if (!isSpace && !isEnter) return;
+
+          // only when Gender screen is showing
+          if (!document.querySelector('input[name="demoGender"]')) return;
+
+          const t = e.target;
+          const tag = t?.tagName?.toLowerCase() || "";
+
+          // If typing in self-describe, Enter should advance; Space should just type
+          if (tag === "input" && t.type === "text") {
+            if (isEnter) {
+              e.preventDefault();
+              document.getElementById("demoNextBtn")?.click();
+            }
+            return;
+          }
+
+          // If on radios (or anywhere else), Space/Enter should advance
+          if (tag === "input" && t.type === "radio") {
+            // Space on radio selects; if it was already selected, treat as "advance"
+            if (isSpace && !t.checked) return; // let browser check it
+          }
+
+          e.preventDefault();
+          document.getElementById("demoNextBtn")?.click();
+        };
+        document.addEventListener("keydown", demoKeyHandler);
+
+    
     }
       // ✅ UPDATED renderDemoEducation: removed "Other" radio; always show centered self-describe input; correct scoping/braces
       function renderDemoEducation(){
@@ -1255,6 +1299,36 @@
           const checked = document.querySelector('input[name="demoEdu"]:checked');
           (checked || document.querySelector('input[name="demoEdu"]'))?.focus({ preventScroll: true });
         });
+      
+      // ✅ Space/Enter to advance on demos (Education)
+        clearDemoKeyHandler();
+        demoKeyHandler = (e) => {
+          const isSpace = (e.code === "Space" || e.key === " ");
+          const isEnter = (e.key === "Enter");
+          if (!isSpace && !isEnter) return;
+
+          // only when Education screen is showing
+          if (!document.querySelector('input[name="demoEdu"]')) return;
+
+          const t = e.target;
+          const tag = t?.tagName?.toLowerCase() || "";
+
+          if (tag === "input" && t.type === "text") {
+            if (isEnter) {
+              e.preventDefault();
+              document.getElementById("demoNextBtn")?.click();
+            }
+            return;
+          }
+
+          if (tag === "input" && t.type === "radio") {
+            if (isSpace && !t.checked) return; // let browser check it
+          }
+
+          e.preventDefault();
+          document.getElementById("demoNextBtn")?.click();
+        };
+        document.addEventListener("keydown", demoKeyHandler);
       }
 
 
@@ -1303,9 +1377,7 @@
 
       // Normalize demo fields (trim text, keep blanks blank)
       const genderSelf = String(demoAnswers.gender_self || "").trim();
-      const eduOther = (demoAnswers.education === "Other")
-        ? String(demoAnswers.education_other || "").trim()
-        : "";
+      const eduOther = String(demoAnswers.education_other || "").trim();
 
       const payload = {
         app_version: APP_VERSION,
