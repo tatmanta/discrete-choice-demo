@@ -262,10 +262,11 @@ a:hover{ text-decoration: underline; }
 
 table.scenarioTbl{
   width: 100%;
-  min-width: 720px;
+  min-width: 0;              /* ✅ was 720px */
   border-collapse: separate;
   border-spacing: 14px 14px;
   background: transparent;
+  table-layout: fixed;       /* ✅ add */
 }
 
 table.scenarioTbl th,
@@ -286,6 +287,13 @@ table.scenarioTbl thead th{
   font-weight: 700;
   color: var(--text);
   backdrop-filter: blur(6px);
+}
+
+/* PERF: backdrop-filter + sticky inside scroll containers can thrash on mobile emulation */
+@media (max-width: 720px){
+  table.scenarioTbl thead th{
+    backdrop-filter: none !important;
+  }
 }
 
 /* Body: remove grid lines */
@@ -398,10 +406,8 @@ table.scenarioTbl td.hoverScenarioCol{
   box-shadow: 0 10px 22px rgba(17,19,24,0.08);
   transition:
     transform 140ms ease,
-    box-shadow 140ms ease,
     border-color 140ms ease,
-    opacity 140ms ease,
-    filter 140ms ease;
+    opacity 140ms ease;
 }
 
 /* Hover lift (on card) */
@@ -428,7 +434,6 @@ td.selectedScenarioCol .scCard{
 table.scenarioTbl.hasSelection[data-selected="1"] [data-scn="2"] .scCard,
 table.scenarioTbl.hasSelection[data-selected="2"] [data-scn="1"] .scCard{
   opacity: 0.55;
-  filter: saturate(0.85);
   box-shadow: 0 8px 16px rgba(17,19,24,0.06);
   transform: none;
 }
@@ -459,42 +464,52 @@ table.scenarioTbl.hasSelection .selectedScenarioCol:hover .scCard{
   border: 0 !important;
 }
 
-/* The OR cell becomes the positioning anchor */
+
+/* OR column: just a gutter now */
+.orHead{
+  background: transparent !important;
+  border: 0 !important;
+}
+
 .orCell{
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
   vertical-align: middle;
   text-align: center;
-  position: relative;
-  min-width: 44px;
+  position: static;     /* ✅ not an anchor anymore */
+  min-width: 44px;      /* gutter width */
 }
 table.scenarioTbl td.orCell{ box-shadow: none !important; }
 
-/* Badge centered in OR column */
-.orBadge{
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+/* Single OR badge (rendered once per question, inside .table-wrap) */
+.table-wrap{ position: relative; overflow: visible; }
 
+.orBadge{
+  /* keep your pill styling here (font, border, background, shadow, etc.) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   font-weight: 800;
   letter-spacing: 0.08em;
   font-size: 12px;
   color: rgba(17,19,24,0.42);
-
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(255,255,255,0.92);
   border: 1px solid rgba(17,19,24,0.10);
   box-shadow: 0 6px 14px rgba(17,19,24,0.06);
-
   pointer-events: none;
   user-select: none;
+}
+
+/* only the single instance gets absolute positioning */
+.orBadge.orBadge-single{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
 }
 
 /* “activate” chosen header pill */
@@ -507,11 +522,15 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
 
 /* Mobile: horizontal scroll affordance (final) */
 @media (max-width: 720px){
-  table.scenarioTbl{ min-width: 600px; }
+  table.scenarioTbl{ min-width: 0; }
   table.scenarioTbl{ border-spacing: 10px 12px; }
   .scCard{ padding: 14px 14px; font-size: 0.95rem; }
   .orCell{ min-width: 32px; }
   .orBadge{ font-size: 10px; padding: 4px 6px; letter-spacing: 0.06em; }
+}
+
+@media (max-width: 720px){
+  .table-wrap{ background: #fff; }
 }
 
 /* =========================================
@@ -1147,3 +1166,94 @@ th.focusedScenarioCol .scHeadRadio{
   box-shadow: 0 0 0 3px var(--ringStrong) !important;
 }
 
+/* =========================================================
+   ONE "OR" PER QUESTION (centered between the two columns)
+   ========================================================= */
+
+.table-wrap{
+  position: relative;          /* anchor for OR layer */
+  max-width: 100%;
+  overflow-x: auto;            /* keep horizontal scroll */
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  padding-bottom: 16px;        /* space so badge doesn't feel cramped */
+}
+
+/* overlay layer for the single OR badge */
+.orLayer{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* single OR badge */
+.orBadge.orBadge-single{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* middle column is just a gutter */
+.orCell,
+.orHead{
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+.orCell{
+  min-width: 44px;
+  text-align: center;
+  vertical-align: middle;
+  position: static;
+}
+
+/* hide any leftover per-row badges */
+.orCell .orBadge{ display: none !important; }
+.orBadge:not(.orBadge-single){ display: none !important; }
+
+@media (max-width: 720px){
+  .orCell{ min-width: 32px; }
+  .orBadge.orBadge-single{
+    font-size: 10px;
+    padding: 4px 6px;
+    letter-spacing: 0.06em;
+  }
+}
+
+
+.orCell .orBadge{ display: none !important; }
+
+/* Hide any OR badges that are NOT the single one */
+.orBadge:not(.orBadge-single){
+  display: none !important;
+}
+
+.table-wrap{ position: relative; }
+
+/* layer matches the table block, so 50% is visually correct */
+.orLayer{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+
+  /* match the table’s top area (includes header + rows) */
+  height: 100%;
+
+  pointer-events: none;
+  z-index: 6;
+}
+
+.orBadge.orBadge-single{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}

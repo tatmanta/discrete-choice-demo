@@ -267,7 +267,6 @@
           <div class="btn-row result-actions">
             <button class="btn btn-primary" id="openScienceModal" type="button">
             See the science →</button>
-            <button class="btn btn-ghost" id="restartBtn">Take again</button>
           </div>
         </div>
       `;
@@ -278,14 +277,6 @@
       const titleEl = document.getElementById("resultTitle");
       if (titleEl) titleEl.focus();
 
-      // Restart
-      const restartBtn = document.getElementById("restartBtn");
-      if (restartBtn) {
-        restartBtn.onclick = () => {
-          sessionStorage.clear();
-          window.location.href = "./index.html";
-        };
-      }
 
       // Share click tracking
       const shareCard = mount.querySelector(".share-card");
