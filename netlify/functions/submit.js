@@ -1,4 +1,4 @@
-const SHEET = "responses"; // your Sheet tab name
+const SHEET = "responses";
 
 function jsonResponse(statusCode, body) {
   return {
@@ -15,36 +15,30 @@ function safeJsonParse(str) {
   try { return JSON.parse(str); } catch { return null; }
 }
 
-/**
- * ✅ Robust SheetDB URL builder:
- * - Supports SHEETDB_URL like:
- *   - https://sheetdb.io/api/v1/XXXX
- *   - https://sheetdb.io/api/v1/XXXX?token=YYYY
- * - Preserves any existing query params (e.g., token=...)
- * - Appends path segments correctly (no "...?token=.../search" bugs)
- */
-function makeSheetdbUrlBuilder(rawUrl) {
-  const u = new URL(rawUrl);
-  const basePath = u.pathname.replace(/\/+$/, ""); // remove trailing slash
-  const base = `${u.origin}${basePath}`;
+// simple helper: retry on 429/5xx with backoff
+async function fetchWithRetry(url, options, { tries = 3, baseDelayMs = 400 } = {}) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
 
-  // capture any existing query params (e.g., token=...)
-  const baseParams = new URLSearchParams(u.search);
+      // retry only on 429 or 5xx
+      if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+        last = res;
+        const delay = baseDelayMs * Math.pow(2, i);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
 
-  return function build(path = "", params = {}) {
-    const url = new URL(base + path);
-
-    // keep original params (token, etc.)
-    baseParams.forEach((v, k) => url.searchParams.set(k, v));
-
-    // add/override extra params
-    Object.entries(params).forEach(([k, v]) => {
-      if (v === undefined || v === null) return;
-      url.searchParams.set(k, String(v));
-    });
-
-    return url.toString();
-  };
+      return res; // non-retriable
+    } catch (e) {
+      last = e;
+      const delay = baseDelayMs * Math.pow(2, i);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  return last; // may be Response or Error
 }
 
 exports.handler = async (event) => {
@@ -52,18 +46,11 @@ exports.handler = async (event) => {
     return jsonResponse(405, { ok: false, error: "Method not allowed" });
   }
 
-  const SHEETDB_URL = process.env.SHEETDB_URL;
-  const TOKEN = process.env.SHEETDB_BEARER_TOKEN; // optional depending on your SheetDB auth setup
+  const SHEETDB_URL = process.env.SHEETDB_URL; // e.g. https://sheetdb.io/api/v1/XXXX
+  const TOKEN = process.env.SHEETDB_BEARER_TOKEN;
 
   if (!SHEETDB_URL) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_URL env var" });
-
-  // Build URLs safely even if SHEETDB_URL already has ?token=...
-  let buildUrl;
-  try {
-    buildUrl = makeSheetdbUrlBuilder(SHEETDB_URL);
-  } catch {
-    return jsonResponse(500, { ok: false, error: "Invalid SHEETDB_URL env var (must be a valid URL)" });
-  }
+  if (!TOKEN) return jsonResponse(500, { ok: false, error: "Missing SHEETDB_BEARER_TOKEN env var" });
 
   const body = safeJsonParse(event.body || "");
   if (!body) return jsonResponse(400, { ok: false, error: "Invalid JSON" });
@@ -107,55 +94,21 @@ exports.handler = async (event) => {
   const nowIso = new Date().toISOString();
   const response_id = (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`);
 
-  // Optional debug (remove later)
-  console.log("[submit] sheetdb base:", SHEETDB_URL.split("?")[0]);
-  console.log("[submit] sheet:", SHEET);
+  // ✅ IMPORTANT: remove SheetDB "search" dedupe check to avoid doubling requests
+  // If you still want dedupe, do it later in analysis using dedupe_key + created_at_utc.
 
-  // Common headers (Authorization only if provided)
-  const headersAuth = TOKEN ? { "Authorization": `Bearer ${TOKEN}` } : {};
-
-  // 1) DEDUPE CHECK (search by dedupe_key)
-  // SheetDB supports: /search?dedupe_key=...
-  const searchUrl = buildUrl("/search", { sheet: SHEET, dedupe_key });
-
-  let existing = [];
-  try {
-    const r = await fetch(searchUrl, {
-      method: "GET",
-      headers: { ...headersAuth },
-    });
-    if (r.ok) existing = await r.json();
-    else console.log("[submit] dedupe search non-200:", r.status, await r.text().catch(() => ""));
-  } catch (e) {
-    console.log("[submit] dedupe search exception:", String(e));
-    existing = [];
-  }
-
-  // If any existing row is within dedupe window, reject
-  const windowMs = Math.max(1, Number(dedupe_window_minutes || 60)) * 60 * 1000;
-  const nowMs = Date.now();
-
-  const isDup = Array.isArray(existing) && existing.some(row => {
-    const ts = row.created_at_utc;
-    const ms = ts ? Date.parse(ts) : NaN;
-    if (Number.isNaN(ms)) return false;
-    return (nowMs - ms) <= windowMs;
-  });
-
-  if (isDup) {
-    return jsonResponse(200, { ok: true, deduped: true, response_id: null });
-  }
-
-  // 2) WRITE ROW
   const row = {
     response_id,
     created_at_utc: nowIso,
+
     app_version: app_version || "",
     env: env || "",
+
     session_id,
     client_run_id,
     dedupe_key,
     dedupe_window_minutes: String(dedupe_window_minutes || 60),
+
     block_index: String(block_index ?? ""),
     n_questions: String(n_questions ?? ""),
     answers_json: answers_json || "",
@@ -163,16 +116,19 @@ exports.handler = async (event) => {
     winner_attr_index: String(winner_attr_index ?? ""),
     winner_value_type: winner_value_type || "",
     winner_persona_name: winner_persona_name || "",
+
     timezone: timezone || "",
     language: language || "",
     user_agent: user_agent || "",
     referrer: referrer || "",
     page_url: page_url || "",
+
     user_id: user_id || "",
     geo_country: geo_country || "",
     geo_region: geo_region || "",
     geo_city: geo_city || "",
     geo_timezone: geo_timezone || "",
+
     demo_age: String(demo_age ?? ""),
     demo_gender: demo_gender || "",
     demo_gender_self: demo_gender_self || "",
@@ -180,28 +136,30 @@ exports.handler = async (event) => {
     demo_education_other: demo_education_other || "",
   };
 
-  // ✅ Correct write URL even with token in SHEETDB_URL
-  const writeUrl = buildUrl("", { sheet: SHEET });
+  const writeUrl = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET)}`;
 
-  try {
-    const w = await fetch(writeUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...headersAuth,
-      },
-      body: JSON.stringify({ data: [row] }),
-    });
+  const resp = await fetchWithRetry(writeUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${TOKEN}`,
+    },
+    body: JSON.stringify({ data: [row] }),
+  }, { tries: 3, baseDelayMs: 500 });
 
-    if (!w.ok) {
-      const txt = await w.text().catch(() => "");
-      console.log("[submit] write failed:", w.status, txt);
-      return jsonResponse(502, { ok: false, error: "SheetDB write failed", detail: txt });
-    }
-  } catch (e) {
-    console.log("[submit] write exception:", String(e));
-    return jsonResponse(502, { ok: false, error: "SheetDB write exception", detail: String(e) });
+  // fetchWithRetry may return Error
+  if (!resp || typeof resp.ok !== "boolean") {
+    return jsonResponse(502, { ok: false, error: "SheetDB write exception", detail: String(resp) });
   }
 
-  return jsonResponse(200, { ok: true, deduped: false, response_id });
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => "");
+    // Surface rate limit clearly
+    if (resp.status === 429) {
+      return jsonResponse(429, { ok: false, error: "SheetDB rate limit (429). Upgrade plan or reduce calls.", detail: txt });
+    }
+    return jsonResponse(502, { ok: false, error: "SheetDB write failed", status: resp.status, detail: txt });
+  }
+
+  return jsonResponse(200, { ok: true, response_id });
 };
