@@ -399,36 +399,6 @@
       };
       document.addEventListener("keydown", overlay._keyHandler);
     }
-    
-    async function logEvent(event_name, event_value = "") {
-      try {
-        if (!sessionId || !event_name) return;
-
-        const payload = {
-          app_version: APP_VERSION || "",
-          env: ENV || "",
-          user_id: localStorage.getItem("dc_user_id") || "",
-          session_id: sessionId,
-          client_run_id: clientRunId || sessionStorage.getItem("dc_client_run_id") || "",
-          event_name,
-          event_detail: String(event_value || ""),
-          page_url: window.location.href || "",
-          referrer: document.referrer || "",
-          user_agent: navigator.userAgent || ""
-        };
-
-        sessionStorage.setItem("dc_app_version", APP_VERSION);
-        sessionStorage.setItem("dc_env", ENV);
-
-        fetch("/.netlify/functions/event", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-      } catch (e) {
-        console.warn("event logger failed silently");
-      }
-    }
 
     const DEDUPE_WINDOW_MINUTES = 60;
 
@@ -527,7 +497,6 @@
       assignedBlock = blocks[blockIndex];
       answers = Array(assignedBlock.length).fill(null);
 
-      logEvent("survey_start", `blockIndex=${blockIndex}`);
       showTask(0);
     }
 
@@ -733,7 +702,6 @@
         }
 
         answers[currentTask] = choice.value;
-        logEvent("question_answered", `q=${currentTask + 1}|choice=${choice.value}`);
 
         // last DCE -> demo
         if (idx === assignedBlock.length - 1) {
@@ -751,7 +719,6 @@
             wireDemoInfoOverlay({
               onContinue: () => startDemo(),
               onSkip: () => {
-                logEvent("demo_skipped", "user_skipped_demo_block");
                 startDemo(); // or submitSurvey() if you want to bypass demos entirely
               }
             });
@@ -1093,7 +1060,6 @@
 
           if (demoAnswers.age_pref === "Prefer not to say") {
             demoAnswers.age = null;
-            logEvent("demo_answered", "age=prefer_not");
             showDemo(1);
             return;
           }
@@ -1104,7 +1070,6 @@
             return;
           }
           demoAnswers.age = v;
-          logEvent("demo_answered", `age=${v}`);
           showDemo(1);
         };
       }
@@ -1218,7 +1183,6 @@
           return;
         }
 
-        logEvent("demo_answered", `gender=${demoAnswers.gender || ""}|gender_self=${demoAnswers.gender_self}`);
         showDemo(2);
       };
 
@@ -1351,7 +1315,6 @@
           return;
         }
 
-        logEvent("demo_answered", `education=${demoAnswers.education || ""}|education_other=${demoAnswers.education_other}`);
         finalizeSubmit();
       };
 
@@ -1451,8 +1414,6 @@
       sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
       sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
 
-      logEvent("survey_submit", `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`);
-
       if (!clientRunId) {
         clientRunId = sessionStorage.getItem("dc_client_run_id") || crypto.randomUUID();
         sessionStorage.setItem("dc_client_run_id", clientRunId);
@@ -1549,8 +1510,6 @@
       sessionStorage.setItem("dc_results_personaName", personaInfo[importantAttrIndex].name);
       sessionStorage.setItem("dc_results_valueType", personaInfo[importantAttrIndex].value);
       sessionStorage.setItem("dc_results_desc", personaInfo[importantAttrIndex].desc);
-
-      logEvent("survey_submit", `winner=${personaInfo[importantAttrIndex].name}|blockIndex=${blockIndex}`);
 
       if (!clientRunId) {
         clientRunId = sessionStorage.getItem("dc_client_run_id") || crypto.randomUUID();
