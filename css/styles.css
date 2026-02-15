@@ -15,14 +15,14 @@
 
   /* ✅ UCLA accent system */
   --uclaBlue: #2774AE;                    /* UCLA Blue */
-  --accent: var(--uclaBlue);             /* primary accent used across UI */
+  --accent: var(--uclaBlue);              /* primary accent used across UI */
   --accentText: #ffffff;
-  --accentHover: #1F5F8E;                /* slightly darker for hover */
-  --accentSoft: rgba(39, 116, 174, 0.10);/* light tint for surfaces */
+  --accentHover: #1F5F8E;                 /* slightly darker for hover */
+  --accentSoft: rgba(39, 116, 174, 0.10); /* light tint for surfaces */
   --accentSoft2: rgba(39, 116, 174, 0.06);
-  --highlight: rgba(39, 116, 174, 0.12); /* selected column tint (heavier) */
-  --hoverTint: rgba(39, 116, 174, 0.06); /* hover tint (lighter) */
-  --ring: rgba(39, 116, 174, 0.28);      /* focus/outline */
+  --highlight: rgba(39, 116, 174, 0.12);  /* selected column tint (heavier) */
+  --hoverTint: rgba(39, 116, 174, 0.06);  /* hover tint (lighter) */
+  --ring: rgba(39, 116, 174, 0.28);       /* focus/outline */
   --ringStrong: rgba(39, 116, 174, 0.45);
 
   --proto: #fff2a8;
@@ -169,6 +169,12 @@ a:hover{ text-decoration: underline; }
 
 .btn{
   appearance: none;
+
+  /* ✅ make width rules behave consistently everywhere */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   border-radius: 999px;
   padding: 10px 18px;
   font: inherit;
@@ -192,6 +198,31 @@ a:hover{ text-decoration: underline; }
 .btn-primary:hover{ background: var(--accentHover); }
 
 .btn-ghost{ background: #fff; }
+
+/* ✅ Default bottom-nav sizing (non-equal rows) */
+.btn-row .btn{
+  min-width: 140px;
+}
+
+/* ✅ Opt-in: make the nav row buttons equal width (DCE + demos) */
+.btn-row.equal-btns{
+  width: 100%;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.btn-row.equal-btns .btn{
+  flex: 1 1 0;
+  min-width: 0; /* overrides global min-width so flex can equalize */
+}
+
+/* When you toggle visibility in JS, prefer opacity/pointer-events (no layout shift) */
+.btn-row #demoSkipBtn.is-hidden,
+.btn-row #demoNextBtn.is-hidden{
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
 
 /* =========================================
    Task header + progress
@@ -225,7 +256,7 @@ a:hover{ text-decoration: underline; }
 
 .progress-bar{
   height: 100%;
-  background: var(--accent); /* ✅ UCLA blue */
+  background: var(--accent);
   width: 0%;
 }
 
@@ -234,6 +265,7 @@ a:hover{ text-decoration: underline; }
 ========================================= */
 
 .table-wrap{
+  position: relative;          /* anchor for OR layer */
   max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
@@ -245,6 +277,8 @@ a:hover{ text-decoration: underline; }
   box-shadow: none;
   background: transparent;
   clip-path: none;
+
+  padding-bottom: 16px;        /* space so badge doesn't feel cramped */
 }
 
 @media (max-width: 720px){
@@ -266,7 +300,7 @@ table.scenarioTbl{
   border-collapse: separate;
   border-spacing: 14px 14px;
   background: transparent;
-  table-layout: fixed;       /* ✅ add */
+  table-layout: fixed;
 }
 
 table.scenarioTbl th,
@@ -291,9 +325,7 @@ table.scenarioTbl thead th{
 
 /* PERF: backdrop-filter + sticky inside scroll containers can thrash on mobile emulation */
 @media (max-width: 720px){
-  table.scenarioTbl thead th{
-    backdrop-filter: none !important;
-  }
+  table.scenarioTbl thead th{ backdrop-filter: none !important; }
 }
 
 /* Body: remove grid lines */
@@ -338,7 +370,7 @@ table.scenarioTbl td{
 .scHeadRadio input{
   width: 16px;
   height: 16px;
-  accent-color: var(--accent); /* ✅ UCLA blue */
+  accent-color: var(--accent);
   transform: translateY(1px);
 }
 .scHeadRadio span{ font-weight: 700; }
@@ -349,10 +381,10 @@ table.scenarioTbl td{
   box-shadow: none;
 }
 
-/* Keyboard focus ring (keep on survey, remove on results via .results-page rules) */
+/* Keyboard focus ring */
 .scenarioTbl [data-scn]:focus-visible{
   outline: none;
-  box-shadow: none; /* prevents square focus box on td */
+  box-shadow: none;
 }
 
 /* Put focus styling on the card instead */
@@ -404,13 +436,10 @@ table.scenarioTbl td.hoverScenarioCol{
   line-height: 1.45;
   font-size: 1rem;
   box-shadow: 0 10px 22px rgba(17,19,24,0.08);
-  transition:
-    transform 140ms ease,
-    border-color 140ms ease,
-    opacity 140ms ease;
+  transition: transform 140ms ease, border-color 140ms ease, opacity 140ms ease;
 }
 
-/* Hover lift (on card) */
+/* Hover lift */
 .scCell:hover .scCard{
   transform: translateY(-1px);
   box-shadow: 0 14px 28px rgba(17,19,24,0.10);
@@ -428,7 +457,6 @@ td.selectedScenarioCol .scCard{
   box-shadow: 0 14px 28px rgba(17,19,24,0.10);
   transform: translateY(-1px);
 }
-
 
 /* Dim the unselected column when a selection exists */
 table.scenarioTbl.hasSelection[data-selected="1"] [data-scn="2"] .scCard,
@@ -458,35 +486,32 @@ table.scenarioTbl.hasSelection .selectedScenarioCol:hover .scCard{
   transform: inherit;
 }
 
-/* Middle OR column */
+/* Middle OR column is just a gutter */
+.orCell,
 .orHead{
   background: transparent !important;
   border: 0 !important;
-}
-
-
-/* OR column: just a gutter now */
-.orHead{
-  background: transparent !important;
-  border: 0 !important;
+  padding: 0 !important;
 }
 
 .orCell{
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  vertical-align: middle;
+  min-width: 44px;
   text-align: center;
-  position: static;     /* ✅ not an anchor anymore */
-  min-width: 44px;      /* gutter width */
+  vertical-align: middle;
+  position: static;
 }
 table.scenarioTbl td.orCell{ box-shadow: none !important; }
 
-/* Single OR badge (rendered once per question, inside .table-wrap) */
-.table-wrap{ position: relative; overflow: visible; }
+/* overlay layer for the single OR badge */
+.orLayer{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
 
+/* OR badge */
 .orBadge{
-  /* keep your pill styling here (font, border, background, shadow, etc.) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -503,14 +528,17 @@ table.scenarioTbl td.orCell{ box-shadow: none !important; }
   user-select: none;
 }
 
-/* only the single instance gets absolute positioning */
 .orBadge.orBadge-single{
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 5;
+  z-index: 7;
 }
+
+/* hide any leftover per-row badges */
+.orCell .orBadge{ display: none !important; }
+.orBadge:not(.orBadge-single){ display: none !important; }
 
 /* “activate” chosen header pill */
 table.scenarioTbl.hasSelection[data-selected="1"] th[data-scn="1"] .scHeadRadio,
@@ -520,15 +548,13 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   box-shadow: 0 0 0 2px rgba(17,19,24,0.22);
 }
 
-/* Mobile: horizontal scroll affordance (final) */
+/* Mobile tweaks */
 @media (max-width: 720px){
-  table.scenarioTbl{ min-width: 0; }
-  table.scenarioTbl{ border-spacing: 10px 12px; }
+  table.scenarioTbl{ min-width: 0; border-spacing: 10px 12px; }
   .scCard{ padding: 14px 14px; font-size: 0.95rem; }
   .orCell{ min-width: 32px; }
   .orBadge{ font-size: 10px; padding: 4px 6px; letter-spacing: 0.06em; }
 }
-
 @media (max-width: 720px){
   .table-wrap{ background: #fff; }
 }
@@ -587,7 +613,6 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
 
 .result-actions{ justify-content: center; }
 
-/* Results hero image */
 .results-page .result-hero{
   width: 50%;
   max-width: 280px;
@@ -631,7 +656,7 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   color: var(--muted);
 }
 
-/* spinner (no images, fast) */
+/* spinner */
 .loading-spinner{
   width: 34px;
   height: 34px;
@@ -641,7 +666,6 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   animation: spin 0.9s linear infinite;
   margin: 0 auto;
 }
-
 @keyframes spin{ to { transform: rotate(360deg); } }
 
 /* Results: distribution + share */
@@ -765,10 +789,7 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
 }
 
 @media (max-width: 720px){
-  .bar-row{
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
+  .bar-row{ grid-template-columns: 1fr; gap: 6px; }
   .bar-val{ justify-self: start; }
 }
 
@@ -808,7 +829,6 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   color: var(--muted);
 }
 
-/* Footer: research affiliations */
 .footer-meta{
   font-size: 0.85rem;
   color: var(--muted);
@@ -838,7 +858,6 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
    Modal system
 ========================================= */
 
-/* Modal overlay + card */
 .modal-overlay{
   position: fixed;
   inset: 0;
@@ -901,33 +920,20 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   box-shadow: 0 0 0 2px var(--ring);
 }
 
-/* Question 1 Helper Modal (Apple-style refinements) */
-.help-card{
-  position: relative;
-  max-width: 560px;
-}
+/* Question 1 Helper Modal refinements */
+.help-card{ position: relative; max-width: 560px; }
 
-.help-head{
-  text-align: center;
-  margin-bottom: 14px;
-}
+.help-head{ text-align: center; margin-bottom: 14px; }
+.help-head .modal-title{ margin: 0; text-align: center; }
 
-.help-head .modal-title{
-  margin: 0;
-  text-align: center;
-}
-
-/* Close button — Apple-style, top-right */
 .help-card .modal-close{
   top: 14px;
   right: 14px;
-
   width: 32px;
   height: 32px;
   border-radius: 999px;
   border: none;
   background: transparent;
-
   font-size: 22px;
   line-height: 1;
   font-weight: 400;
@@ -1000,33 +1006,11 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   .btn-row > *{ width: 100%; }
 }
 
-/* Demo nav: keep Skip/Next same size */
-.btn-row #demoPrevBtn,
-.btn-row #demoSkipBtn,
-.btn-row #demoNextBtn{
-  min-width: 140px;      /* adjust to taste */
-  justify-content: center;
-}
+/* =========================================
+   Demo: age dial + centering
+========================================= */
 
-/* When you toggle visibility in JS, prefer opacity/pointer-events (no layout shift) */
-.btn-row #demoSkipBtn.is-hidden,
-.btn-row #demoNextBtn.is-hidden{
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-}
-
-/* Global: make buttons in the bottom nav row consistent */
-.btn-row .btn{
-  min-width: 140px;
-  justify-content: center;
-}
-
-/* ======= Age dial styles ======= */
-
-.demo-form{
-  margin-top: 10px;
-}
+.demo-form{ margin-top: 10px; }
 
 .demo-label{
   display: block;
@@ -1034,11 +1018,16 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   margin: 8px 0 8px;
 }
 
+/* ✅ match the width of the choice list rows (min(520px,100%)) */
 .demo-age-row{
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+
+  width: min(520px, 100%);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .demo-number{
@@ -1066,6 +1055,15 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
 .demo-step{
   padding: 10px 14px;
   border-radius: 999px;
+}
+
+/* ✅ ensure the “Prefer not to say” pill matches the width above */
+.demo-radio-wrap{
+  width: min(520px, 100%);
+  margin: 12px auto 0;
+}
+.demo-radio-wrap .scHeadRadio{
+  width: 100%;
 }
 
 /* Apple-like wheel (visual only) */
@@ -1124,33 +1122,32 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   margin-top: 8px;
 }
 
-/* ✅ 3) Add these CSS rules to ./css/styles.css */
-
 /* Center the demo question block */
-.demo-center {
+.demo-center{
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.demo-center-text {
-  text-align: center;
-}
+.demo-center-text{ text-align: center; }
+.demo-center-row{ justify-content: center; }
 
-.demo-center-row {
-  justify-content: center;
-}
+/* Demo screens: keep header/progress full width like main questions */
+.survey-card.demo-center .task-head{ width: 100%; }
+
+/* keep the demo body aligned with header width */
+.survey-card.demo-center .demo-form{ width: 100%; }
 
 /* Remove up/down spinners inside number input */
 .demo-number-no-spinners::-webkit-outer-spin-button,
-.demo-number-no-spinners::-webkit-inner-spin-button {
+.demo-number-no-spinners::-webkit-inner-spin-button{
   -webkit-appearance: none;
   appearance: none;
   margin: 0;
 }
-.demo-number-no-spinners {
-  -moz-appearance: textfield; /* Firefox */
+.demo-number-no-spinners{
+  -moz-appearance: textfield;
   appearance: none;
 }
 
@@ -1160,100 +1157,8 @@ table.scenarioTbl.hasSelection[data-selected="2"] th[data-scn="2"] .scHeadRadio{
   outline-offset: 0 !important;
 }
 
-/* optional: show focus using the cards only (no column box) */
+/* show focus using the cards only */
 td.focusedScenarioCol .scCard,
 th.focusedScenarioCol .scHeadRadio{
   box-shadow: 0 0 0 3px var(--ringStrong) !important;
-}
-
-/* =========================================================
-   ONE "OR" PER QUESTION (centered between the two columns)
-   ========================================================= */
-
-.table-wrap{
-  position: relative;          /* anchor for OR layer */
-  max-width: 100%;
-  overflow-x: auto;            /* keep horizontal scroll */
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
-  padding-bottom: 16px;        /* space so badge doesn't feel cramped */
-}
-
-/* overlay layer for the single OR badge */
-.orLayer{
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
-}
-
-/* single OR badge */
-.orBadge.orBadge-single{
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 7;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* middle column is just a gutter */
-.orCell,
-.orHead{
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 !important;
-}
-
-.orCell{
-  min-width: 44px;
-  text-align: center;
-  vertical-align: middle;
-  position: static;
-}
-
-/* hide any leftover per-row badges */
-.orCell .orBadge{ display: none !important; }
-.orBadge:not(.orBadge-single){ display: none !important; }
-
-@media (max-width: 720px){
-  .orCell{ min-width: 32px; }
-  .orBadge.orBadge-single{
-    font-size: 10px;
-    padding: 4px 6px;
-    letter-spacing: 0.06em;
-  }
-}
-
-
-.orCell .orBadge{ display: none !important; }
-
-/* Hide any OR badges that are NOT the single one */
-.orBadge:not(.orBadge-single){
-  display: none !important;
-}
-
-.table-wrap{ position: relative; }
-
-/* layer matches the table block, so 50% is visually correct */
-.orLayer{
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-
-  /* match the table’s top area (includes header + rows) */
-  height: 100%;
-
-  pointer-events: none;
-  z-index: 6;
-}
-
-.orBadge.orBadge-single{
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
 }

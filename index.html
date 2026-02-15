@@ -120,30 +120,29 @@
     </div>
   </div>
 
-  <!-- Demo (Demographics) info overlay -->
-  <div id="demoInfoOverlay" class="loading-overlay is-hidden"
-       role="dialog" aria-modal="true"
-       aria-labelledby="demoInfoTitle" aria-describedby="demoInfoBody">
-    <div class="loading-card help-card" role="document">
-      <div class="help-head">
-        <p class="loading-title" id="demoInfoTitle">Demographic Section</p>
-        <button type="button" class="modal-close subtle-close" id="demoInfoCloseX" aria-label="Close">
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
+    <!-- Demo (Demographics) info overlay -->
+    <div id="demoInfoOverlay" class="loading-overlay is-hidden"
+        role="dialog" aria-modal="true"
+        aria-labelledby="demoInfoTitle" aria-describedby="demoInfoBody">
+      <div class="loading-card help-card" role="document">
+        <div class="help-head">
+          <p class="loading-title" id="demoInfoTitle">Demographic Section</p>
+          <button type="button" class="modal-close subtle-close" id="demoInfoCloseX" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
 
-      <div class="loading-sub help-body" id="demoInfoBody">
-        <p><b>Thanks for completing the main portion of this survey!</b></p>
-        <p>The following demographic questions help ensure the results reflect people like you.</p>
-        <p>Responses are stored anonymously and are reported only in aggregate.</p>
-        <p><i>The following questions are optional.</i></p>
-      </div>
+        <div class="loading-sub help-body" id="demoInfoBody">
+          <p><b>Thanks for completing the main portion of this survey!</b></p>
+          <p>The following demographic questions help ensure the results reflect people like you.</p>
+          <p>Responses are stored anonymously and are reported only in aggregate.</p>
+        </div>
 
-      <div class="cta-row" style="margin-top:14px">
-        <button type="button" class="btn btn-primary" id="demoInfoContinueBtn">Continue</button>
+        <div class="cta-row" style="margin-top:14px">
+          <button type="button" class="btn btn-primary" id="demoInfoContinueBtn">Continue</button>
+        </div>
       </div>
     </div>
-  </div>
 
   <script>
     // --- Page head show/hide (for results page) ---
@@ -254,9 +253,9 @@
     };
 
     const DEMO_MIN_AGE = 18;
-    const DEMO_MAX_AGE = 99;
+    const DEMO_MAX_AGE = 117;
 
-    const APP_VERSION = "Updates 2026-02-13";
+    const APP_VERSION = "Updates 2026-02-15";
     const ENV = "prod";
 
     const sessionId = sessionStorage.getItem("dc_session_id") || crypto.randomUUID();
@@ -349,12 +348,15 @@
       const btn = document.getElementById("demoInfoContinueBtn");
       if (btn) btn.focus({ preventScroll: true });
     }
-    function hideDemoInfoOverlay(){
-      const el = document.getElementById("demoInfoOverlay");
-      if (!el) return;
-      el.classList.add("is-hidden");
-    }
-    
+
+    // ✅ FIXED hideDemoInfoOverlay: correct scoping, added focus return to first demo question
+      function hideDemoInfoOverlay(){
+        const el = document.getElementById("demoInfoOverlay");
+        if (!el) return;
+        el.classList.add("is-hidden");
+      }
+
+
     // Single key handler, correct scoping, optional skip button, added focus return to first demo question
     
     function wireDemoInfoOverlay({ onContinue, onSkip }){
@@ -562,13 +564,14 @@
       const task = assignedBlock[idx];
       const [profileA, profileB] = task;
 
-      const progressPct = Math.round(((idx + 1) / assignedBlock.length) * 100);
+      const stepNum = stepNumberForTask(idx);
+      const progressPct = progressPctForStep(stepNum);
 
       document.getElementById('mainBlock').innerHTML = `
         <div class="survey-card">
           <div class="task-head">
             <div class="task-meta">
-              <span class="task-count">Question ${idx + 1} of ${assignedBlock.length}</span>
+            <span class="task-count">${stepNum} of ${totalSteps()}</span>
               <span class="task-prompt">Choose the scenario (1 or 2) that matters more to you.</span>
             </div>
             <div class="progress" aria-label="Progress">
@@ -897,490 +900,530 @@
 
     function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
-/* =========================================================
-   ✅ REPLACE YOUR ENTIRE DEMO BLOCK WITH THIS (CLEAN)
-   Starts at: function showDemo(idx){
-   Ends right before: async function submitSurvey() {
-   ========================================================= */
 
-// ✅ FIXED showDemo: single key handler, correct scoping/braces
-function showDemo(idx){
-  clearTaskKeyHandler();
-  clearIntroKeyHandler();
-  clearDemoKeyHandler();
-  scrollToTopInstant();
-  hidePageHead();
+    // ✅ FIXED showDemo: single demoKeyHandler, correct scoping/braces
+    function showDemo(idx){
+      clearTaskKeyHandler();
+      clearIntroKeyHandler();
+      clearDemoKeyHandler();
+      scrollToTopInstant();
+      hidePageHead();
 
-  demoIndex = idx;
+      demoIndex = idx;
 
-  if (idx === 0) return renderDemoAge();
-  if (idx === 1) return renderDemoGender();
-  if (idx === 2) return renderDemoEducation();
+      if (idx === 0) return renderDemoAge();
+      if (idx === 1) return renderDemoGender();
+      if (idx === 2) return renderDemoEducation();
 
-  finalizeSubmit();
-}
+      finalizeSubmit();
+    }
 
-/* -----------------------------
-   ✅ DEMO 1/3: Age (optional)
-   - numeric input + stepper
-   - "Prefer not to say" radio
-   - no Skip button
-------------------------------*/
-function renderDemoAge(){
-  const totalSteps = assignedBlock.length + 3;
-  const stepNum = assignedBlock.length + 1;
-  const progressPct = Math.round((stepNum / totalSteps) * 100);
+    function renderDemoAge(){
+      const stepNum = stepNumberForDemo(0);
+      const progressPct = progressPctForStep(stepNum);
 
-  const ageVal = (demoAnswers.age === null || demoAnswers.age === undefined)
-    ? ""
-    : String(demoAnswers.age);
+      const ageVal = (demoAnswers.age === null || demoAnswers.age === undefined) ? "" : String(demoAnswers.age);
 
-  document.getElementById('mainBlock').innerHTML = `
-    <div class="survey-card demo-center">
-      <div class="task-head">
-        <div class="task-meta demo-center-text">
-          <span class="task-count">About you (optional) · 1 of 3</span>
-          <span class="task-prompt">Age</span>
-        </div>
-        <div class="progress" aria-label="Progress">
-          <div class="progress-bar" style="width:${progressPct}%"></div>
-        </div>
-      </div>
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card demo-center">
+          <div class="task-head">
+            <div class="task-meta demo-center-text">
+            <span class="task-count">${stepNum} of ${totalSteps()}</span>        
+            <span class="task-prompt">Age</span>
+            </div>
+            <div class="progress" aria-label="Progress">
+              <div class="progress-bar" style="width:${progressPct}%"></div>
+            </div>
+          </div>
 
-      <div class="demo-form demo-center-text">
-        <label class="demo-label" for="ageInput">Age (years)</label>
+          <div class="demo-form demo-center-text">
+            <label class="demo-label" for="ageInput">Age (years)</label>
 
-        <div class="demo-age-row demo-center-row">
-          <input
-            id="ageInput"
-            class="demo-number demo-number-no-spinners"
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            value="${ageVal}"
-            aria-describedby="ageErr"
-            aria-label="Age in years (optional)"
-            placeholder="e.g., 40"
-            autocomplete="off"
-          />
+            <div class="demo-age-row demo-center-row">
+              <input
+                id="ageInput"
+                class="demo-number demo-number-no-spinners"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                value="${ageVal}"
+                aria-describedby="ageErr"
+                aria-label="Age in years"
+                placeholder="e.g., 40"
+                autocomplete="off"
+              />
 
-          <div class="demo-stepper">
-            <button type="button" class="btn demo-step" id="ageDec" aria-label="Decrease age">−</button>
-            <button type="button" class="btn demo-step" id="ageInc" aria-label="Increase age">+</button>
+              <div class="demo-stepper">
+                <button type="button" class="btn demo-step" id="ageDec" aria-label="Decrease age">−</button>
+                <button type="button" class="btn demo-step" id="ageInc" aria-label="Increase age">+</button>
+              </div>
+            </div>
+
+            <p class="fineprint" id="ageErr" style="display:none; text-align:left; margin-top:6px;">
+              Please enter an age between ${DEMO_MIN_AGE} and ${DEMO_MAX_AGE}.
+            </p>
+
+            <div class="demo-radio-wrap">
+              <label class="scHeadRadio demo-radio">
+                <input
+                  type="radio"
+                  name="demoAgePref"
+                  value="Prefer not to say"
+                  ${demoAnswers.age_pref === "Prefer not to say" ? "checked" : ""}
+                />
+                <span>Prefer not to say</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="btn-row equal-btns">
+            <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
+            <button type="button" class="btn btn-primary" id="demoNextBtn">Next</button>
           </div>
         </div>
+      `;
 
-        <p class="fineprint" id="ageErr" style="display:none; text-align:left; margin-top:6px;">
-          Please enter an age between ${DEMO_MIN_AGE} and ${DEMO_MAX_AGE}.
-        </p>
+      const ageInput = document.getElementById("ageInput");
+      const ageDec   = document.getElementById("ageDec");
+      const ageInc   = document.getElementById("ageInc");
+      const ageErr   = document.getElementById("ageErr");
+      const btnPrev  = document.getElementById("demoPrevBtn");
+      const btnNext  = document.getElementById("demoNextBtn");
+      const agePref  = document.querySelector('input[name="demoAgePref"]');
+      const showErr = (on) => { if (ageErr) ageErr.style.display = on ? "" : "none"; };
 
-        <div class="demo-radio-wrap">
-          <label class="scHeadRadio demo-radio">
-            <input
-              type="radio"
-              name="demoAgePref"
-              value="Prefer not to say"
-              ${demoAnswers.age_pref === "Prefer not to say" ? "checked" : ""}
-            />
-            <span>Prefer not to say</span>
-          </label>
-        </div>
-      </div>
 
-      <div class="btn-row equal-btns">
-        <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
-        <button type="button" class="btn btn-primary" id="demoNextBtn">Next</button>
-      </div>
-    </div>
-  `;
+      // Live input validation + stripping non-digits
+      ageInput.addEventListener("input", () => {
+        // Strip non-digits live
+        ageInput.value = ageInput.value.replace(/\D/g, "");
 
-  const ageInput = document.getElementById("ageInput");
-  const ageDec   = document.getElementById("ageDec");
-  const ageInc   = document.getElementById("ageInc");
-  const ageErr   = document.getElementById("ageErr");
-  const btnPrev  = document.getElementById("demoPrevBtn");
-  const btnNext  = document.getElementById("demoNextBtn");
-  const agePref  = document.querySelector('input[name="demoAgePref"]');
+        if ((ageInput.value || "").trim() !== "") {
+          demoAnswers.age_pref = null;
+          if (agePref) agePref.checked = false;
+        }
+        updateCtas();
+      });
 
-  const showErr = (on) => { if (ageErr) ageErr.style.display = on ? "" : "none"; };
+      function parseAgeOrNull(){
+        const raw = (ageInput.value || "").trim();
+        if (raw === "") return null;
 
-  function parseAgeOrNull(){
-    const raw = (ageInput.value || "").trim();
-    if (raw === "") return null;
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return "__invalid__";
-    if (n < DEMO_MIN_AGE || n > DEMO_MAX_AGE) return "__invalid__";
-    return Math.round(n);
-  }
+        // Must be digits only
+        if (!/^\d+$/.test(raw)) return "__invalid__";
 
-  function updateCtas(){
-    const v = parseAgeOrNull();
-    showErr(v === "__invalid__");
-    if (btnNext) btnNext.disabled = (v === "__invalid__");
-  }
+        const n = Number(raw);
 
-  ageInput.addEventListener("input", () => {
-    if ((ageInput.value || "").trim() !== "") {
-      demoAnswers.age_pref = null;
-      if (agePref) agePref.checked = false;
-    }
-    updateCtas();
-  });
+        if (!Number.isInteger(n)) return "__invalid__";
+        if (n < DEMO_MIN_AGE || n > DEMO_MAX_AGE) return "__invalid__";
 
-  if (agePref) {
-    agePref.addEventListener("change", () => {
-      if (agePref.checked) {
-        demoAnswers.age_pref = "Prefer not to say";
-        demoAnswers.age = null;
-        ageInput.value = "";
+        return n;
+      }
+
+      function updateCtas(){
+        const v = parseAgeOrNull();
+        showErr(v === "__invalid__");
+        if (btnNext) btnNext.disabled = (v === "__invalid__");
+      }
+
+      ageInput.addEventListener("input", () => {
+        if ((ageInput.value || "").trim() !== "") {
+          demoAnswers.age_pref = null;
+          if (agePref) agePref.checked = false;
+        }
+        updateCtas();
+      });
+
+      if (agePref) {
+        agePref.addEventListener("change", () => {
+          if (agePref.checked) {
+            demoAnswers.age_pref = "Prefer not to say";
+            demoAnswers.age = null;
+            ageInput.value = "";
+            showErr(false);
+            updateCtas();
+          }
+        });
+      }
+
+      ageDec.onclick = () => {
+        demoAnswers.age_pref = null;
+        if (agePref) agePref.checked = false;
+
+        const cur = parseAgeOrNull();
+        const next = (cur === null || cur === "__invalid__") ? DEMO_MIN_AGE : (cur - 1);
+        const a = clamp(next, DEMO_MIN_AGE, DEMO_MAX_AGE);
+
+        demoAnswers.age = a;
+        ageInput.value = String(a);
         showErr(false);
         updateCtas();
-      }
-    });
-  }
+      };
 
-  ageDec.onclick = () => {
-    demoAnswers.age_pref = null;
-    if (agePref) agePref.checked = false;
+      ageInc.onclick = () => {
+        demoAnswers.age_pref = null;
+        if (agePref) agePref.checked = false;
 
-    const cur = parseAgeOrNull();
-    const next = (cur === null || cur === "__invalid__") ? DEMO_MIN_AGE : (cur - 1);
-    const a = clamp(next, DEMO_MIN_AGE, DEMO_MAX_AGE);
+        const cur = parseAgeOrNull();
+        const next = (cur === null || cur === "__invalid__") ? DEMO_MIN_AGE : (cur + 1);
+        const a = clamp(next, DEMO_MIN_AGE, DEMO_MAX_AGE);
 
-    demoAnswers.age = a;
-    ageInput.value = String(a);
-    showErr(false);
-    updateCtas();
-  };
-
-  ageInc.onclick = () => {
-    demoAnswers.age_pref = null;
-    if (agePref) agePref.checked = false;
-
-    const cur = parseAgeOrNull();
-    const next = (cur === null || cur === "__invalid__") ? DEMO_MIN_AGE : (cur + 1);
-    const a = clamp(next, DEMO_MIN_AGE, DEMO_MAX_AGE);
-
-    demoAnswers.age = a;
-    ageInput.value = String(a);
-    showErr(false);
-    updateCtas();
-  };
-
-  if (btnPrev) {
-    btnPrev.onclick = () => {
-      inDemo = false;
-      showTask(assignedBlock.length - 1);
-    };
-  }
-
-  if (btnNext) {
-    btnNext.onclick = () => {
-      const v = parseAgeOrNull();
-
-      if (v === "__invalid__") {
+        demoAnswers.age = a;
+        ageInput.value = String(a);
+        showErr(false);
         updateCtas();
-        ageInput.focus({ preventScroll:true });
-        return;
+      };
+
+      if (btnPrev) {
+        btnPrev.onclick = () => {
+          inDemo = false;
+          showTask(assignedBlock.length - 1);
+        };
       }
 
-      if (demoAnswers.age_pref === "Prefer not to say") {
-        demoAnswers.age = null;
-        logEvent("demo_answered", "age=prefer_not");
-        showDemo(1);
-        return;
+      if (btnNext) {
+        btnNext.onclick = () => {
+          const v = parseAgeOrNull();
+
+          if (v === "__invalid__") {
+            updateCtas();
+            ageInput.focus({ preventScroll:true });
+            return;
+          }
+
+          if (demoAnswers.age_pref === "Prefer not to say") {
+            demoAnswers.age = null;
+            logEvent("demo_answered", "age=prefer_not");
+            showDemo(1);
+            return;
+          }
+
+          if (v === null) {
+            alert("Please select an answer before continuing.");
+            ageInput.focus({ preventScroll:true });
+            return;
+          }
+          demoAnswers.age = v;
+          logEvent("demo_answered", `age=${v}`);
+          showDemo(1);
+        };
       }
 
-      if (v === null) {
-        demoAnswers.age = null;
-        logEvent("demo_answered", "age=");
-        showDemo(1);
-        return;
-      }
+      clearDemoKeyHandler();
+      demoKeyHandler = (e) => {
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
+        if (!isSpace && !isEnter) return;
 
-      demoAnswers.age = v;
-      logEvent("demo_answered", `age=${v}`);
-      showDemo(1);
-    };
-  }
+        if (!document.getElementById("ageInput")) return;
 
-  // keyboard advance (Age)
-  clearDemoKeyHandler();
-  demoKeyHandler = (e) => {
-    const isSpace = (e.code === "Space" || e.key === " ");
-    const isEnter = (e.key === "Enter");
-    if (!isSpace && !isEnter) return;
+        const t = e.target;
+        const tag = t?.tagName?.toLowerCase() || "";
 
-    if (!document.getElementById("ageInput")) return;
+        if (tag === "input" && t.type === "text") {
+          if (isEnter) {
+            e.preventDefault();
+            document.getElementById("demoNextBtn")?.click();
+          }
+          return;
+        }
 
-    const t = e.target;
-    const tag = t?.tagName?.toLowerCase() || "";
+        if (tag === "input" && t.type === "radio") {
+          if (isSpace && !t.checked) return;
+        }
 
-    if (tag === "input" && t.type === "text") {
-      if (isEnter) {
         e.preventDefault();
         document.getElementById("demoNextBtn")?.click();
-      }
-      return;
+      };
+      document.addEventListener("keydown", demoKeyHandler);
+
+      updateCtas();
+      ageInput.focus({ preventScroll: true });
     }
 
-    if (tag === "input" && t.type === "radio") {
-      if (isSpace && !t.checked) return;
-    }
+    function renderDemoGender(){
+      const stepNum = stepNumberForDemo(1);
+      const progressPct = progressPctForStep(stepNum);
 
-    e.preventDefault();
-    document.getElementById("demoNextBtn")?.click();
-  };
-  document.addEventListener("keydown", demoKeyHandler);
+      const options = ["Male", "Female", "Prefer not to say"];
+      const selected = demoAnswers.gender;
 
-  updateCtas();
-  ageInput.focus({ preventScroll: true });
-}
-
-/* -----------------------------
-   ✅ DEMO 2/3: Gender (optional)
-------------------------------*/
-function renderDemoGender(){
-  const totalSteps = assignedBlock.length + 3;
-  const stepNum = assignedBlock.length + 2;
-  const progressPct = Math.round((stepNum / totalSteps) * 100);
-
-  const options = ["Male", "Female", "Prefer not to say"];
-  const selected = demoAnswers.gender;
-
-  document.getElementById('mainBlock').innerHTML = `
-    <div class="survey-card demo-center">
-      <div class="task-head">
-        <div class="task-meta demo-center-text">
-          <span class="task-count">About you (optional) · 2 of 3</span>
-          <span class="task-prompt">Gender</span>
-        </div>
-        <div class="progress" aria-label="Progress">
-          <div class="progress-bar" style="width:${progressPct}%"></div>
-        </div>
-      </div>
-
-      <div class="demo-form demo-center-text">
-        <fieldset style="border:0;padding:0;margin:0; width:100%;">
-          <legend class="demo-label" style="margin-bottom:10px">Select one (optional)</legend>
-
-          <div style="width:min(520px,100%); margin:0 auto; text-align:left;">
-            ${options.map((opt) => `
-              <label class="scHeadRadio" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0">
-                <input type="radio" name="demoGender" value="${opt}" ${selected === opt ? "checked" : ""} />
-                <span>${opt}</span>
-              </label>
-            `).join("")}
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card demo-center">
+          <div class="task-head">
+            <div class="task-meta demo-center-text">
+              <span class="task-count">${stepNum} of ${totalSteps()}</span>
+              <span class="task-prompt">Gender</span>
+            </div>
+            <div class="progress" aria-label="Progress">
+              <div class="progress-bar" style="width:${progressPct}%"></div>
+            </div>
           </div>
 
           <div class="demo-form demo-center-text">
-            <input
-              id="genderSelf"
-              class="demo-number self-describe-input"
-              type="text"
-              value="${(demoAnswers.gender_self || "").replace(/"/g, "&quot;")}"
-              placeholder="Self-describe (optional)"
-              autocomplete="off"
-            />
+            <fieldset style="border:0;padding:0;margin:0; width:100%;">
+              <legend class="demo-label" style="margin-bottom:10px">Select one</legend>
+
+              <div style="width:min(520px,100%); margin:0 auto; text-align:left;">
+                ${options.map((opt) => `
+                  <label class="scHeadRadio" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0">
+                    <input type="radio" name="demoGender" value="${opt}" ${selected === opt ? "checked" : ""} />
+                    <span>${opt}</span>
+                  </label>
+                `).join("")}
+              </div>
+
+              <div class="demo-form demo-center-text">
+                <input
+                  id="genderSelf"
+                  class="demo-number self-describe-input"
+                  type="text"
+                  value="${(demoAnswers.gender_self || "").replace(/"/g, "&quot;")}"
+                  placeholder="Self-describe"
+                  autocomplete="off"
+                />
+              </div>
+            </fieldset>
           </div>
-        </fieldset>
-      </div>
 
-      <div class="btn-row equal-btns">
-        <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
-        <button type="button" class="btn btn-primary" id="demoNextBtn">Next</button>
-      </div>
-    </div>
-  `;
+          <div class="btn-row equal-btns">
+            <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
+            <button type="button" class="btn btn-primary" id="demoNextBtn">Next</button>
+          </div>
+        </div>
+      `;
 
-  const self = document.getElementById("genderSelf");
+      const self = document.getElementById("genderSelf");
 
-  const readSelection = () =>
-    document.querySelector('input[name="demoGender"]:checked')?.value ?? null;
+      const readSelection = () =>
+        document.querySelector('input[name="demoGender"]:checked')?.value ?? null;
 
-  document.querySelectorAll('input[name="demoGender"]').forEach(rb => {
-    rb.addEventListener("change", () => { demoAnswers.gender = readSelection(); });
-  });
+      document.querySelectorAll('input[name="demoGender"]').forEach(rb => {
+        rb.addEventListener("change", () => { demoAnswers.gender = readSelection(); });
+      });
 
-  if (self) {
-    self.addEventListener("input", () => { demoAnswers.gender_self = self.value || ""; });
-  }
+      if (self) {
+        self.addEventListener("input", () => { demoAnswers.gender_self = self.value || ""; });
+      }
 
-  document.getElementById("demoPrevBtn").onclick = () => showDemo(0);
+      document.getElementById("demoPrevBtn").onclick = () => showDemo(0);
 
-  document.getElementById("demoNextBtn").onclick = () => {
-    demoAnswers.gender = readSelection();
-    demoAnswers.gender_self = String(demoAnswers.gender_self || "").trim();
+      document.getElementById("demoNextBtn").onclick = () => {
+        demoAnswers.gender = readSelection();
+        demoAnswers.gender_self = String(demoAnswers.gender_self || "").trim();
 
-    logEvent("demo_answered", `gender=${demoAnswers.gender || ""}|gender_self=${demoAnswers.gender_self}`);
-    showDemo(2);
-  };
+        if (!demoAnswers.gender) {
+          alert("Please select an answer before continuing.");
+          (document.querySelector('input[name="demoGender"]') || document.getElementById("genderSelf"))?.focus?.({ preventScroll:true });
+          return;
+        }
 
-  requestAnimationFrame(() => {
-    const checked = document.querySelector('input[name="demoGender"]:checked');
-    (checked || document.querySelector('input[name="demoGender"]'))?.focus({ preventScroll: true });
-  });
+        logEvent("demo_answered", `gender=${demoAnswers.gender || ""}|gender_self=${demoAnswers.gender_self}`);
+        showDemo(2);
+      };
 
-  clearDemoKeyHandler();
-  demoKeyHandler = (e) => {
-    const isSpace = (e.code === "Space" || e.key === " ");
-    const isEnter = (e.key === "Enter");
-    if (!isSpace && !isEnter) return;
+      requestAnimationFrame(() => {
+        const checked = document.querySelector('input[name="demoGender"]:checked');
+        (checked || document.querySelector('input[name="demoGender"]'))?.focus({ preventScroll: true });
+      });
 
-    if (!document.querySelector('input[name="demoGender"]')) return;
+      clearDemoKeyHandler();
+      demoKeyHandler = (e) => {
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
+        if (!isSpace && !isEnter) return;
 
-    const t = e.target;
-    const tag = t?.tagName?.toLowerCase() || "";
+        if (!document.querySelector('input[name="demoGender"]')) return;
 
-    if (tag === "input" && t.type === "text") {
-      if (isEnter) {
+        const t = e.target;
+        const tag = t?.tagName?.toLowerCase() || "";
+
+        if (tag === "input" && t.type === "text") {
+          if (isEnter) {
+            e.preventDefault();
+            document.getElementById("demoNextBtn")?.click();
+          }
+          return;
+        }
+
+        if (tag === "input" && t.type === "radio") {
+          if (isSpace && !t.checked) return;
+        }
+
         e.preventDefault();
         document.getElementById("demoNextBtn")?.click();
-      }
-      return;
+      };
+      document.addEventListener("keydown", demoKeyHandler);
     }
 
-    if (tag === "input" && t.type === "radio") {
-      if (isSpace && !t.checked) return;
-    }
+    function renderDemoEducation(){
+      const stepNum = stepNumberForDemo(2);
+      const progressPct = progressPctForStep(stepNum);  
+     
+      const options = [
+        "Some High School",  
+        "High School Grad",
+        "Some College",
+        "College Grad",
+        "Advanced Degree",
+        "Prefer not to say"
+      ];
 
-    e.preventDefault();
-    document.getElementById("demoNextBtn")?.click();
-  };
-  document.addEventListener("keydown", demoKeyHandler);
-}
+      const selected = demoAnswers.education;
 
-/* -----------------------------
-   ✅ DEMO 3/3: Education (optional)
-   - one render function ONLY (removes duplicate)
-   - no broken stray code
-------------------------------*/
-function renderDemoEducation(){
-  const totalSteps = assignedBlock.length + 3;
-  const stepNum = assignedBlock.length + 3;
-  const progressPct = Math.round((stepNum / totalSteps) * 100);
-
-  const options = [
-    "High School Grad",
-    "Some College",
-    "College Grad",
-    "Advanced Degree",
-    "Prefer not to say"
-  ];
-
-  const selected = demoAnswers.education;
-
-  document.getElementById('mainBlock').innerHTML = `
-    <div class="survey-card demo-center">
-      <div class="task-head">
-        <div class="task-meta demo-center-text">
-          <span class="task-count">About you (optional) · 3 of 3</span>
-          <span class="task-prompt">Education</span>
-        </div>
-        <div class="progress" aria-label="Progress">
-          <div class="progress-bar" style="width:${progressPct}%"></div>
-        </div>
-      </div>
-
-      <div class="demo-form demo-center-text">
-        <fieldset style="border:0;padding:0;margin:0; width:100%;">
-          <legend class="demo-label" style="margin-bottom:10px">Select one (optional)</legend>
-
-          <div style="width:min(520px,100%); margin:0 auto; text-align:left;">
-            ${options.map((opt) => `
-              <label class="scHeadRadio" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0">
-                <input type="radio" name="demoEdu" value="${opt}" ${selected === opt ? "checked" : ""} />
-                <span>${opt}</span>
-              </label>
-            `).join("")}
+      document.getElementById('mainBlock').innerHTML = `
+        <div class="survey-card demo-center">
+          <div class="task-head">
+            <div class="task-meta demo-center-text">
+              <span class="task-count">${stepNum} of ${totalSteps()}</span>
+              <span class="task-prompt">Education</span>
+            </div>
+            <div class="progress" aria-label="Progress">
+              <div class="progress-bar" style="width:${progressPct}%"></div>
+            </div>
           </div>
 
           <div class="demo-form demo-center-text">
-            <input
-              id="eduSelf"
-              class="demo-number self-describe-input"
-              type="text"
-              value="${(demoAnswers.education_other || "").replace(/"/g, "&quot;")}"
-              placeholder="Self-describe (optional)"
-              autocomplete="off"
-            />
+            <fieldset style="border:0;padding:0;margin:0; width:100%;">
+              <legend class="demo-label" style="margin-bottom:10px">Select one</legend>
+
+              <div style="width:min(520px,100%); margin:0 auto; text-align:left;">
+                ${options.map((opt) => `
+                  <label class="scHeadRadio" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0">
+                    <input type="radio" name="demoEdu" value="${opt}" ${selected === opt ? "checked" : ""} />
+                    <span>${opt}</span>
+                  </label>
+                `).join("")}
+              </div>
+
+              <div class="demo-form demo-center-text">
+                <input
+                  id="eduSelf"
+                  class="demo-number self-describe-input"
+                  type="text"
+                  value="${(demoAnswers.education_other || "").replace(/"/g, "&quot;")}"
+                  placeholder="Self-describe"
+                  autocomplete="off"
+                />
+              </div>
+            </fieldset>
           </div>
-        </fieldset>
-      </div>
 
-      <div class="btn-row equal-btns">
-        <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
-        <button type="button" class="btn btn-primary" id="demoNextBtn">Finish</button>
-      </div>
-    </div>
-  `;
+          <div class="btn-row equal-btns">
+            <button type="button" class="btn btn-ghost" id="demoPrevBtn">Previous</button>
+            <button type="button" class="btn btn-primary" id="demoNextBtn">Finish</button>
+          </div>
+        </div>
+      `;
 
-  const self = document.getElementById("eduSelf");
+      const self = document.getElementById("eduSelf");
 
-  const readSelection = () =>
-    document.querySelector('input[name="demoEdu"]:checked')?.value ?? null;
+      const readSelection = () =>
+        document.querySelector('input[name="demoEdu"]:checked')?.value ?? null;
 
-  document.querySelectorAll('input[name="demoEdu"]').forEach(rb => {
-    rb.addEventListener("change", () => {
-      demoAnswers.education = readSelection();
-      if (demoAnswers.education === "Prefer not to say") {
-        demoAnswers.education_other = "";
-        if (self) self.value = "";
+      document.querySelectorAll('input[name="demoEdu"]').forEach(rb => {
+        rb.addEventListener("change", () => {
+          demoAnswers.education = readSelection();
+          if (demoAnswers.education === "Prefer not to say") {
+            demoAnswers.education_other = "";
+            if (self) self.value = "";
+          }
+        });
+      });
+
+      if (self) {
+        self.addEventListener("input", () => { demoAnswers.education_other = self.value || ""; });
       }
-    });
-  });
 
-  if (self) {
-    self.addEventListener("input", () => { demoAnswers.education_other = self.value || ""; });
-  }
+      document.getElementById("demoPrevBtn").onclick = () => showDemo(1);
 
-  document.getElementById("demoPrevBtn").onclick = () => showDemo(1);
+      document.getElementById("demoNextBtn").onclick = () => {
+        demoAnswers.education = readSelection();
+        demoAnswers.education_other = String(demoAnswers.education_other || "").trim();
 
-  document.getElementById("demoNextBtn").onclick = () => {
-    demoAnswers.education = readSelection();
-    demoAnswers.education_other = String(demoAnswers.education_other || "").trim();
+        if (demoAnswers.education === "Prefer not to say") {
+          demoAnswers.education_other = "";
+        }
 
-    if (demoAnswers.education === "Prefer not to say") {
-      demoAnswers.education_other = "";
-    }
+       if (!demoAnswers.education) {
+          alert("Please select an answer before continuing.");
+          (document.querySelector('input[name="demoEdu"]') || document.getElementById("eduSelf"))?.focus?.({ preventScroll:true });
+          return;
+        }
 
-    logEvent("demo_answered", `education=${demoAnswers.education || ""}|education_other=${demoAnswers.education_other}`);
-    finalizeSubmit();
-  };
+        logEvent("demo_answered", `education=${demoAnswers.education || ""}|education_other=${demoAnswers.education_other}`);
+        finalizeSubmit();
+      };
 
-  requestAnimationFrame(() => {
-    const checked = document.querySelector('input[name="demoEdu"]:checked');
-    (checked || document.querySelector('input[name="demoEdu"]'))?.focus({ preventScroll: true });
-  });
+      requestAnimationFrame(() => {
+        const checked = document.querySelector('input[name="demoEdu"]:checked');
+        (checked || document.querySelector('input[name="demoEdu"]'))?.focus({ preventScroll: true });
+      });
 
-  clearDemoKeyHandler();
-  demoKeyHandler = (e) => {
-    const isSpace = (e.code === "Space" || e.key === " ");
-    const isEnter = (e.key === "Enter");
-    if (!isSpace && !isEnter) return;
+      clearDemoKeyHandler();
+      demoKeyHandler = (e) => {
+        const isSpace = (e.code === "Space" || e.key === " ");
+        const isEnter = (e.key === "Enter");
+        if (!isSpace && !isEnter) return;
 
-    if (!document.querySelector('input[name="demoEdu"]')) return;
+        if (!document.querySelector('input[name="demoEdu"]')) return;
 
-    const t = e.target;
-    const tag = t?.tagName?.toLowerCase() || "";
+        const t = e.target;
+        const tag = t?.tagName?.toLowerCase() || "";
 
-    if (tag === "input" && t.type === "text") {
-      if (isEnter) {
+        if (tag === "input" && t.type === "text") {
+          if (isEnter) {
+            e.preventDefault();
+            document.getElementById("demoNextBtn")?.click();
+          }
+          return;
+        }
+
+        if (tag === "input" && t.type === "radio") {
+          if (isSpace && !t.checked) return;
+        }
+
         e.preventDefault();
         document.getElementById("demoNextBtn")?.click();
+      };
+      document.addEventListener("keydown", demoKeyHandler);
+    }
+
+    function totalSteps(){
+      return (assignedBlock?.length || 0) + 3; // 3 demo questions
+    }
+    function stepNumberForTask(taskIdx){
+      // taskIdx is 0-based
+      return taskIdx + 1;
+    }
+    function stepNumberForDemo(demoIdx){
+      // demoIdx is 0-based (0,1,2) and comes after all tasks
+      return (assignedBlock?.length || 0) + (demoIdx + 1);
+    }
+    function progressPctForStep(stepNum){
+      const t = totalSteps();
+      return t ? Math.round((stepNum / t) * 100) : 0;
+    }
+
+     // progress bar labels (e.g. "Step 2 of 5")
+      function totalSteps(){
+        return (assignedBlock?.length || 0) + 3;
       }
-      return;
-    }
+      function stepNumberForTask(taskIdx){
+        return taskIdx + 1;
+      }
+      function stepNumberForDemo(demoIdx){
+        return (assignedBlock?.length || 0) + (demoIdx + 1);
+      }
+      function progressPctForStep(stepNum){
+        const t = totalSteps();
+        return t ? Math.round((stepNum / t) * 100) : 0;
+      }
 
-    if (tag === "input" && t.type === "radio") {
-      if (isSpace && !t.checked) return;
-    }
-
-    e.preventDefault();
-    document.getElementById("demoNextBtn")?.click();
-  };
-  document.addEventListener("keydown", demoKeyHandler);
-}
+      // ✅ add this right here
+      function stepLabel(stepNum){
+        return `Step ${stepNum} of ${totalSteps()}`;
+      }
 
     // ✅ Submit that includes demo fields (and doesn't require any on-screen radio)
     async function finalizeSubmit() {
@@ -1446,7 +1489,7 @@ function renderDemoEducation(){
         winner_value_type: personaInfo[importantAttrIndex].value,
         winner_persona_name: personaInfo[importantAttrIndex].name,
 
-        // demographics (optional)
+        // demographics
         demo_age: (demoAnswers.age === null || demoAnswers.age === undefined) ? "" : String(demoAnswers.age),
         demo_gender: demoAnswers.gender || "",
         demo_gender_self: genderSelf,
