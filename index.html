@@ -1177,7 +1177,7 @@
         demoAnswers.gender = readSelection();
         demoAnswers.gender_self = String(demoAnswers.gender_self || "").trim();
 
-        if (!demoAnswers.gender) {
+        if (!demoAnswers.gender && !demoAnswers.gender_self) {
           alert("Please select an answer before continuing.");
           (document.querySelector('input[name="demoGender"]') || document.getElementById("genderSelf"))?.focus?.({ preventScroll:true });
           return;
@@ -1309,7 +1309,7 @@
           demoAnswers.education_other = "";
         }
 
-       if (!demoAnswers.education) {
+       if (!demoAnswers.education && !demoAnswers.education_other) {
           alert("Please select an answer before continuing.");
           (document.querySelector('input[name="demoEdu"]') || document.getElementById("eduSelf"))?.focus?.({ preventScroll:true });
           return;
