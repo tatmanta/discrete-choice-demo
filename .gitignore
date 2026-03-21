@@ -13,3 +13,7 @@ yarn-error.log*
 
 # Internal docs
 README-internal.md
+
+# Test scripts
+test-submit.js
+load-test.js
