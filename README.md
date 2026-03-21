@@ -2,6 +2,8 @@
 
 A full-stack survey application built with a static frontend, serverless backend, and live aggregate results visualization.
 
+![App screenshot](./assets/discrete%20choice%20results%20page%20screengrab.png)
+
 ## Stack
 - Frontend: Vanilla HTML/CSS/JS
 - Hosting: Netlify
