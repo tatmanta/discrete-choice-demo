@@ -10,3 +10,6 @@ yarn-error.log*
 
 # Env
 .env
+
+# Internal docs
+README-internal.md
