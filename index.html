@@ -1164,11 +1164,20 @@
         document.querySelector('input[name="demoGender"]:checked')?.value ?? null;
 
       document.querySelectorAll('input[name="demoGender"]').forEach(rb => {
-        rb.addEventListener("change", () => { demoAnswers.gender = readSelection(); });
+        rb.addEventListener("change", () => {
+          demoAnswers.gender = readSelection();
+          if (self) { self.value = ""; demoAnswers.gender_self = ""; }
+        });
       });
 
       if (self) {
-        self.addEventListener("input", () => { demoAnswers.gender_self = self.value || ""; });
+        self.addEventListener("input", () => {
+          demoAnswers.gender_self = self.value || "";
+          if (self.value) {
+            document.querySelectorAll('input[name="demoGender"]').forEach(rb => { rb.checked = false; });
+            demoAnswers.gender = null;
+          }
+        });
       }
 
       document.getElementById("demoPrevBtn").onclick = () => showDemo(0);
@@ -1288,15 +1297,18 @@
       document.querySelectorAll('input[name="demoEdu"]').forEach(rb => {
         rb.addEventListener("change", () => {
           demoAnswers.education = readSelection();
-          if (demoAnswers.education === "Prefer not to say") {
-            demoAnswers.education_other = "";
-            if (self) self.value = "";
-          }
+          if (self) { self.value = ""; demoAnswers.education_other = ""; }
         });
       });
 
       if (self) {
-        self.addEventListener("input", () => { demoAnswers.education_other = self.value || ""; });
+        self.addEventListener("input", () => {
+          demoAnswers.education_other = self.value || "";
+          if (self.value) {
+            document.querySelectorAll('input[name="demoEdu"]').forEach(rb => { rb.checked = false; });
+            demoAnswers.education = null;
+          }
+        });
       }
 
       document.getElementById("demoPrevBtn").onclick = () => showDemo(1);
