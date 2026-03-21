@@ -112,19 +112,6 @@
       } catch (_) {}
     }
 
-    // ---- Fetch aggregate N ----
-    async function fetchAggregateN() {
-      try {
-        const res = await fetch("/.netlify/functions/aggregate", { cache: "no-store" });
-        if (!res.ok) return null;
-        const data = await res.json();
-        const n = Number(data?.n);
-        return Number.isFinite(n) ? n : null;
-      } catch {
-        return null;
-      }
-    }
-
     // ---- Render results ----
     async function renderResults(){
       const mount = document.getElementById("resultsMount");
@@ -162,11 +149,7 @@
       const shareUrl  = new URL("./index.html", window.location.href).href;
       const shareText = "I took the Discrete Choice Survey and so should you.";
 
-      // ---- Aggregate N (deduped by user_id in aggregate.js) ----
-      const aggregateN = await fetchAggregateN();
-      const nLabel = Number.isFinite(aggregateN) ? aggregateN.toLocaleString() : "—";
-
-      // ---- Real distribution (deduped by user_id in distribution.js) ----
+      // ---- Distribution (deduped by user_id in distribution.js) ----
       async function fetchDistribution() {
         try {
           const res = await fetch("/.netlify/functions/distribution", { cache: "no-store" });
@@ -184,7 +167,7 @@
       let distHtml = "";
       if (distData && distData.buckets.length) {
         const distN = Number.isFinite(Number(distData.n)) ? Number(distData.n) : null;
-        const distNLabel = distN != null ? distN.toLocaleString() : nLabel;
+        const distNLabel = distN != null ? distN.toLocaleString() : "—";
 
         distHtml = `
           <div class="dist-card" aria-label="Aggregate results comparison">

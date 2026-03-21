@@ -32,6 +32,6 @@ export default async (request, context) => {
   const resp = await context.next(newReq);
 
   // Non-prod check for Netlify geo function run
-  if ((enriched.env || "") !== "prod") out.headers.set("x-edge-ran", "1");
+  if ((enriched.env || "") !== "prod") resp.headers.set("x-edge-ran", "1");
 
 };

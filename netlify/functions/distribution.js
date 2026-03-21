@@ -1,50 +1,70 @@
-exports.handler = async () => {
-  const SHEETDB_URL = process.env.SHEETDB_URL;
-  const TOKEN = process.env.SHEETDB_BEARER_TOKEN;
+// netlify/functions/distribution.js
+// Read responses from Google Sheets, dedupe by user_id, return distribution
 
-  if (!SHEETDB_URL || !TOKEN) {
+const { google } = require("googleapis");
+
+const SHEET_NAME = "responses";
+
+function getSheets() {
+  const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+  const auth = new google.auth.GoogleAuth({
+    credentials: creds,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  });
+  return google.sheets({ version: "v4", auth });
+}
+
+exports.handler = async () => {
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON || !process.env.GOOGLE_SHEET_ID) {
     return {
       statusCode: 500,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Missing SheetDB env vars" }),
+      body: JSON.stringify({ error: "Missing Google Sheets env vars" }),
     };
   }
 
-  const SHEET_NAME = "responses";
-  const url = `${SHEETDB_URL}?sheet=${encodeURIComponent(SHEET_NAME)}`;
-
   try {
-    const resp = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const sheets = getSheets();
+    const resp = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEET_ID,
+      range: `${SHEET_NAME}`,
+    });
 
-    if (!resp.ok) {
-      const text = await resp.text();
+    const rawRows = resp.data.values;
+    if (!rawRows || rawRows.length < 2) {
       return {
-        statusCode: 502,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          error: "SheetDB read failed",
-          status: resp.status,
-          details: String(text || "").slice(0, 300),
-        }),
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300",
+        },
+        body: JSON.stringify({ n: 0, buckets: [] }),
       };
     }
 
-    const rows = await resp.json();
-    if (!Array.isArray(rows)) {
+    // First row is the header
+    const headers = rawRows[0];
+    const userIdIdx = headers.indexOf("user_id");
+    const personaIdx = headers.indexOf("winner_persona_name");
+    const createdIdx = headers.indexOf("created_at_utc");
+
+    if (userIdIdx === -1 || personaIdx === -1) {
       return {
         statusCode: 500,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Unexpected SheetDB response" }),
+        body: JSON.stringify({ error: "Missing expected columns in sheet" }),
       };
     }
 
+    // Dedupe: latest persona per user_id
     const latestByUser = new Map();
-    for (const r of rows) {
-      const userId = String(r?.user_id || "").trim();
-      const persona = String(r?.winner_persona_name || "").trim();
+    for (let i = 1; i < rawRows.length; i++) {
+      const row = rawRows[i];
+      const userId = String(row[userIdIdx] || "").trim();
+      const persona = String(row[personaIdx] || "").trim();
       if (!userId || !persona) continue;
 
-      const t = Date.parse(String(r?.created_at_utc || "")) || 0;
+      const t = createdIdx !== -1 ? (Date.parse(String(row[createdIdx] || "")) || 0) : 0;
       const prev = latestByUser.get(userId);
       if (!prev || t >= prev.t) latestByUser.set(userId, { t, persona });
     }
@@ -66,7 +86,10 @@ exports.handler = async () => {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=300",
+      },
       body: JSON.stringify({ n, buckets }),
     };
   } catch (err) {
