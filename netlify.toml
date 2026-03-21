@@ -2,6 +2,9 @@
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"
 
+[functions."submit"]
+  timeout = 26
+
 [[edge_functions]]
   path = "/.netlify/functions/submit"
   function = "geo-enrich-submit"
