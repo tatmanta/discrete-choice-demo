@@ -177,7 +177,7 @@
                 ${distData.baseline
                   ? "Based on prior research data. Results will update as responses grow."
                   : "Anonymous, aggregate distribution across profiles."}
-                <span class="dist-n">N = ${escapeHtml(distNLabel)}</span>
+                ${distData.baseline ? "" : `<span class="dist-n">N = ${escapeHtml(distNLabel)}</span>`}
               </p>
             </div>
 
@@ -200,7 +200,7 @@
                       <div class="bar-fill ${isYou ? "is-you" : ""}" style="width:${pct}%"></div>
                     </div>
 
-                    <div class="bar-val">${pct}% <span class="fineprint" style="margin-left:6px">(${count})</span></div>
+                    <div class="bar-val">${pct}%${distData.baseline ? "" : ` <span class="fineprint" style="margin-left:6px">(${count})</span>`}</div>
                   </div>
                 `;
               }).join("")}
