@@ -174,7 +174,9 @@
             <div class="dist-head">
               <h3 class="dist-title">How others scored</h3>
               <p class="dist-sub">
-                Anonymous, aggregate distribution across profiles.
+                ${distData.baseline
+                  ? "Based on prior research data. Results will update as responses grow."
+                  : "Anonymous, aggregate distribution across profiles."}
                 <span class="dist-n">N = ${escapeHtml(distNLabel)}</span>
               </p>
             </div>

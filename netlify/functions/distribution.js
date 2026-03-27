@@ -76,6 +76,32 @@ exports.handler = async () => {
 
     const n = latestByUser.size;
 
+    // Baseline fallback: if fewer than 100 deduplicated responses, return
+    // hardcoded baseline percentages (with real n) so the chart is useful.
+    const BASELINE_THRESHOLD = 100;
+    if (n < BASELINE_THRESHOLD) {
+      const baselineData = [
+        { label: "The Comfort Guardian", pctRaw: 25.2 },
+        { label: "The Legacy Weaver",    pctRaw: 24.7 },
+        { label: "The Peace Seeker",     pctRaw: 19.0 },
+        { label: "The Order Keeper",     pctRaw: 17.5 },
+        { label: "The Trusted Soul",     pctRaw: 13.7 },
+      ];
+      const baselineBuckets = baselineData.map(b => ({
+        label: b.label,
+        count: Math.round((b.pctRaw / 100) * n),
+        pct: Math.round(b.pctRaw),
+      }));
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300",
+        },
+        body: JSON.stringify({ n, baseline: true, buckets: baselineBuckets }),
+      };
+    }
+
     const buckets = Array.from(counts.entries())
       .map(([label, count]) => ({
         label: String(label),
